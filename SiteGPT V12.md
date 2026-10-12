@@ -12,6 +12,20 @@ This is reference material, not a fixed reply format. Match the reply to what th
 
 Whatever the task, CatWeb sites and scripts are **JSON, never Lua**. A script is a `"class":"script"` element with `actions` arrays (§5), even though it reads like code.
 
+## Companion files
+
+Some reference material lives in separate files so this guide stays short. Open a file's raw link only when the task needs it:
+
+| Open this | When | Link |
+|---|---|---|
+| `elements.md` | You need more than the summary tables in §2.4/§2.7: a class's full description or a complete example | https://raw.githubusercontent.com/Began2/SiteGPT/main/elements.md |
+| `example-site.md` | You're building a whole site and want a complete, import-valid page to model on | https://raw.githubusercontent.com/Began2/SiteGPT/main/example-site.md |
+| `icons.md` | The site needs an icon that isn't in §10's short list | https://raw.githubusercontent.com/Began2/SiteGPT/main/icons.md |
+| `sounds.md` | The site plays a sound | https://raw.githubusercontent.com/Began2/SiteGPT/main/sounds.md |
+| `decoder.md` | A string is genuinely long (§9) | https://raw.githubusercontent.com/Began2/SiteGPT/main/decoder.md |
+
+**If you can't open a link** (for example, browsing is off), say which file you need and ask the user to paste it. Meanwhile, use only what this guide has. Never guess an asset ID, a property key or a decoder code that lives in a file you couldn't open.
+
 ---
 
 ## Core rules
@@ -176,348 +190,25 @@ When a `UIListLayout` uses `sort:"LayoutOrder"` (always), each child gets an int
 
 ### 2.4 Element Classes
 
-**11 visual classes**, plus `script` and `Folder` (non-visual), plus the styling modifiers in §2.7. Every one adds to the site's cost (§8).
-
-Each section below gives the class's own properties. **Everything also accepts the common properties from §2.1** (`position`, `size`, `width`/`height`, `anchor`, `z_index`, `visible`, `rotation`, `tooltip`, `children`) — those aren't repeated per class. Every example is import-valid and uses the house palette, so they compose into one coherent page rather than standing alone: copy the shape, swap the values.
-
----
-
-#### `Frame`
-
-Inert container — layout wrappers, cards, dividers, backgrounds, decorative shapes. No properties of its own beyond the common set.
-
-```json
-{
-  "class": "Frame",
-  "globalid": "cd",
-  "alias": "statcard",
-  "position": "{0,0},{0,0}",
-  "size": "auto_y",
-  "width": "{1,0}",
-  "background_color": "#16181a",
-  "background_transparency": "0",
-  "children": [
-    {"class": "UICorner", "globalid": "rd", "radius": "0,10"},
-    {"class": "UIStroke", "globalid": "cs", "stroke_color": "#262629", "stroke_thickness": "1"}
-  ]
-}
-```
-
-**Never use a `Frame` for anything that looks clickable** — nav items, tabs, filter chips, linking cards, toggles. Even in a static mockup those are `TextButton`s, so they can carry `auto_color` hover feedback and a press event. A `Frame` cannot respond to a click at all.
-
----
-
-#### `TextLabel`
-
-Static, non-interactive text.
-
-```json
-{
-  "class": "TextLabel",
-  "globalid": "ct",
-  "alias": "cardtitle",
-  "text": "Monthly revenue",
-  "font": "BuilderSansBold",
-  "font_size": "16",
-  "font_color": "#ffffff",
-  "font_weight": "Bold",
-  "font_style": "Normal",
-  "font_transparency": "0",
-  "align_x": "Left",
-  "align_y": "Center",
-  "rich": "false",
-  "wrap": "true",
-  "truncate": "AtEnd",
-  "line_height": "1",
-  "background_transparency": "1",
-  "position": "{0,0},{0,0}",
-  "size": "{1,0},{0,24}"
-}
-```
-
-**Values:** `font_size` a string number or `"scaled"` · `font_weight` `"Thin"`…`"Heavy"` · `font_style` `"Normal"`/`"Italic"` · `align_x` `"Left"`/`"Center"`/`"Right"` · `align_y` `"Top"`/`"Center"`/`"Bottom"` · `truncate` `"AtEnd"`/`"None"`/`"SplitWord"`.
-
-`text` supports `\n`. Setting `rich:"true"` enables markup inside `text` — `<b>`, `<i>`, `<font color="#4e9bff">`. **Limits:** ~20,000 characters per text element before TEXT_OVERLOAD, 200,000 across all text elements on the page.
-
----
-
-#### `TextButton`
-
-Clickable button. Every `TextLabel` property, plus `auto_color`.
-
-```json
-{
-  "class": "TextButton",
-  "globalid": "pb",
-  "alias": "ctaprimary",
-  "text": "Create report",
-  "font": "BuilderSansMedium",
-  "font_size": "14",
-  "font_color": "#ffffff",
-  "align_x": "Center",
-  "align_y": "Center",
-  "auto_color": "true",
-  "background_color": "#4e9bff",
-  "position": "{0,0},{0,0}",
-  "size": "auto",
-  "children": [
-    {"class": "UICorner", "globalid": "pr", "radius": "0,8"},
-    {"class": "UIPadding", "globalid": "pp", "left": "0,16", "right": "0,16", "top": "0,10", "bottom": "0,10"}
-  ]
-}
-```
-
-`auto_color:"true"` darkens the button slightly on press for free — cheap feedback with no script. Drives the events `When <button> pressed...` (event id `1`), mouse enter/leave/down/up (event ids `3`/`5`/`11`/`12`) and right-click (event id `13`).
-
----
-
-#### `TextButton?link`
-
-Button that navigates instead of firing a script event.
-
-```json
-{
-  "class": "TextButton?link",
-  "globalid": "nd",
-  "alias": "navdocs",
-  "text": "Docs",
-  "href": "mysite.rbx/docs",
-  "new_tab": "false",
-  "font": "BuilderSansMedium",
-  "font_size": "14",
-  "font_color": "#adadad",
-  "align_x": "Center",
-  "align_y": "Center",
-  "auto_color": "true",
-  "background_transparency": "1",
-  "position": "{0,0},{0,0}",
-  "size": "auto"
-}
-```
-
-`href` is a CatWeb path (`"mysite.rbx/page"`), optionally with a query string (`"mysite.rbx/docs?view=intro"`; read it on the target page with `Get query string parameter`, action id `67`). `new_tab` is `"true"`/`"false"`. Use this for real navigation; use a plain `TextButton` + `Redirect to` (id `4`) only when the destination depends on runtime logic.
-
----
-
-#### `TextButton?transfer`
-
-Roblox purchase prompt.
-
-```json
-{
-  "class": "TextButton?transfer",
-  "globalid": "sp",
-  "alias": "supportbtn",
-  "text": "Support the project",
-  "product": "123456789",
-  "product_type": "Product",
-  "thanks_href": "mysite.rbx/thanks",
-  "font_size": "14",
-  "font_color": "#08090a",
-  "align_x": "Center",
-  "align_y": "Center",
-  "auto_color": "true",
-  "background_color": "#68de5b",
-  "background_transparency": "0",
-  "position": "{0,0},{0,0}",
-  "size": "auto"
-}
-```
-
-**The class value is `TextButton?transfer` — never `TextButton?donation`.** Its default label reads "Donation", but that is the button's `text`, not its class; `?donation` is an unrecognised class and will not act as a purchase button. `product_type` is `"GamePass"`/`"Asset"`/`"Product"`; `thanks_href` is optional. Completion fires `When donation completed...` (id `15`), which is **parameterless** — it carries no bound object, so one handler cannot tell which button fired.
-
----
-
-#### `TextButton?avataritem`
-
-Avatar-item purchase button — same purchase family as `?transfer`.
-
-```json
-{
-  "class": "TextButton?avataritem",
-  "globalid": "ai",
-  "alias": "itembtn",
-  "text": "Get the hat",
-  "font_size": "14",
-  "font_color": "#08090a",
-  "align_x": "Center",
-  "align_y": "Center",
-  "auto_color": "true",
-  "background_color": "#68de5b",
-  "background_transparency": "0",
-  "position": "{0,0},{0,0}",
-  "size": "auto"
-}
-```
-
-Completion fires `When <avataritem> bought...` (id `7`) which — unlike `?transfer`'s event — **does** carry the purchased item as a bound object parameter, so a single handler can serve several buttons.
-
----
-
-#### `ImageLabel`
-
-Displays a Roblox image asset.
-
-```json
-{
-  "class": "ImageLabel",
-  "globalid": "is",
-  "alias": "iconsearch",
-  "image": "rbxassetid://76297972789266",
-  "image_id": "76297972789266",
-  "image_color": "#adadad",
-  "image_transparency": "0",
-  "scale_type": "Fit",
-  "background_transparency": "1",
-  "position": "{0,0},{0,0}",
-  "size": "{0,16},{0,16}"
-}
-```
-
-**`image` and `image_id` must reference the same asset** — `image` is the `rbxassetid://123` form, `image_id` the bare `123`. Both are normally present. `image_color` tints the asset (the icon library is pure white precisely so it tints cleanly). `scale_type` is `"Fit"`/`"Crop"`/`"Slice"`/`"Stretch"`/`"Tile"`; a `UIAspectRatioConstraint` child locks the natural ratio.
-
----
-
-#### `ImageButton`
-
-Clickable image. Every `ImageLabel` property, plus `auto_color`.
-
-```json
-{
-  "class": "ImageButton",
-  "globalid": "mt",
-  "alias": "menutoggle",
-  "image": "rbxassetid://84352806499655",
-  "image_id": "84352806499655",
-  "image_color": "#ffffff",
-  "scale_type": "Fit",
-  "auto_color": "true",
-  "background_transparency": "1",
-  "position": "{0,0},{0,0}",
-  "size": "{0,24},{0,24}"
-}
-```
-
-Fires the same events as `TextButton`. Swap the icon at runtime with `Set <object> image to` (action id `106`). That is how the hamburger/close toggle in §6 works.
-
----
-
-#### `ImageButton?link`
-
-Image that navigates. `ImageButton` plus `href` / `new_tab`.
-
-```json
-{
-  "class": "ImageButton?link",
-  "globalid": "bl",
-  "alias": "brandlogo",
-  "image": "rbxassetid://128490289676597",
-  "image_id": "128490289676597",
-  "href": "mysite.rbx/home",
-  "new_tab": "false",
-  "image_color": "#ffffff",
-  "scale_type": "Fit",
-  "auto_color": "true",
-  "background_transparency": "1",
-  "position": "{0,0},{0,0}",
-  "size": "{0,28},{0,28}"
-}
-```
-
----
-
-#### `TextBox`
-
-User text input.
-
-```json
-{
-  "class": "TextBox",
-  "globalid": "si",
-  "alias": "searchinput",
-  "text": "",
-  "placeholder": "Search projects",
-  "placeholder_color": "#787878",
-  "editable": "true",
-  "multiline": "false",
-  "rich": "false",
-  "font": "BuilderSans",
-  "font_size": "13",
-  "font_color": "#d7d7d7",
-  "align_x": "Left",
-  "align_y": "Center",
-  "background_color": "#0f1112",
-  "background_transparency": "0",
-  "position": "{0,0},{0,0}",
-  "size": "{1,0},{0,34}",
-  "children": [
-    {"class": "UIPadding", "globalid": "sd", "left": "0,12", "right": "0,12"}
-  ]
-}
-```
-
-`text` is the live value and starts `""` — `placeholder` is the greyed hint shown while it is empty. Read the current value with `Get text from <input>` (action id `30`); pressing Enter fires `When <input> submitted...` (event id `8`). `multiline:"true"` makes it a textarea; `editable:"false"` makes it read-only, which is how you build a copyable output field.
-
----
-
-#### `ScrollingFrame`
-
-Scrollable container.
-
-```json
-{
-  "class": "ScrollingFrame",
-  "globalid": "bs",
-  "alias": "bodyscroll",
-  "canvassize": "auto_y",
-  "scrollbar_thickness": "6",
-  "scrollbar_color": "#262629",
-  "scrollbar_transparency": "0",
-  "background_transparency": "1",
-  "position": "{0,0},{0,56}",
-  "size": "{1,0},{1,-56}",
-  "children": []
-}
-```
-
-`canvassize` is `"auto_y"` (grows downward — most common), `"auto_x"` (carousels), `"auto_xy"` (rare), or a fixed UDim2 such as `"{0,0},{2,0}"` (a canvas twice the frame's height). **Never bare `"auto"`** — always pick an axis, and never leave the non-scrolling axis free. Reach for this only when content genuinely overflows a fixed-height viewport; a `Frame` with `size:"auto_y"` is the right call for content that merely grows.
-
-**Scrollbar styling.** `scrollbar_thickness`, `scrollbar_color` and `scrollbar_transparency` set its size and colour, and scripts can change all three. To replace the scrollbar's images, set `scrollbar_top_image_id`, `scrollbar_mid_image_id` and `scrollbar_bottom_image_id`. Each is a bare asset ID with no `rbxassetid://`, e.g. `"scrollbar_mid_image_id":"6319951718"`. Their script names are `Top Image`, `Middle Image` and `Bottom Image` (§7). Leave all three out to keep the default scrollbar.
-
----
-
-#### `script`
-
-Event and function logic (§5). Not rendered.
-
-```json
-{
-  "class": "script",
-  "globalid": "lg",
-  "alias": "logic",
-  "enabled": "true",
-  "content": []
-}
-```
-
-`content` holds the event and `Define function` blocks (§5.2). Scripts can sit anywhere in the tree, and multiple scripts on a page share global variables and functions. Must be `"class":"script"` inside `webcontent` — a top-level `"script"` key in the JSON root throws `[INVALIDATED] invalid property script`.
-
----
-
-#### `Folder`
-
-Invisible organiser — groups elements in the editor tree without rendering anything.
-
-```json
-{
-  "class": "Folder",
-  "globalid": "ng",
-  "alias": "navgroup",
-  "children": []
-}
-```
-
-Adds to the site's cost (§8) but renders nothing. It has no position or size, so it cannot lay anything out — a `Folder` only tidies the tree. When you need grouping that *affects layout*, use a `Frame`.
+**11 visual classes**, plus `script` and `Folder`, plus the styling modifiers in §2.7. Every one adds to the site's cost (§8). Each class accepts the common properties from §2.1 plus its own keys below; no other keys exist. **For full descriptions and an import-valid example of every class, open [elements.md](https://raw.githubusercontent.com/Began2/SiteGPT/main/elements.md).**
+
+| Class | Its own keys | Watch out |
+|---|---|---|
+| `Frame` | none | Inert container. Never use it for anything that looks clickable; use a `TextButton`. |
+| `TextLabel` | `text` `font` `font_size` `font_color` `font_weight` `font_style` `font_transparency` `align_x` `align_y` `rich` `wrap` `truncate` `line_height` | `text` supports `\n`; `rich:"true"` enables `<b>`, `<i>`, `<font color="#4e9bff">`. Max ~20,000 characters per element. |
+| `TextButton` | TextLabel keys + `auto_color` | `auto_color:"true"` gives free press feedback. |
+| `TextButton?link` | TextButton keys + `href` `new_tab` | `href` is a CatWeb path such as `"mysite.rbx/docs"`. |
+| `TextButton?transfer` | TextButton keys + `product` `product_type` `thanks_href` | The class is `?transfer`, **never** `?donation`. `product_type`: `GamePass`/`Asset`/`Product`. |
+| `TextButton?avataritem` | TextButton keys | Avatar-item purchase button. |
+| `ImageLabel` | `image` `image_id` `image_color` `image_transparency` `scale_type` | `image` (`rbxassetid://N`) and `image_id` (`N`) must be the same asset. |
+| `ImageButton` | ImageLabel keys + `auto_color` | Same events as `TextButton`. |
+| `ImageButton?link` | ImageButton keys + `href` `new_tab` | |
+| `TextBox` | `text` `placeholder` `placeholder_color` `editable` `multiline` `rich` `font` `font_size` `font_color` `align_x` `align_y` | `text` starts as `""`; the hint goes in `placeholder`. |
+| `ScrollingFrame` | `canvassize` `scrollbar_thickness` `scrollbar_color` `scrollbar_transparency` `scrollbar_top_image_id` `scrollbar_mid_image_id` `scrollbar_bottom_image_id` | `canvassize` is `auto_y`/`auto_x`/`auto_xy` or a UDim2, **never** bare `auto`. |
+| `script` | `enabled` `content` | An element inside `webcontent`, never a root-level `"script"` key (§5). |
+| `Folder` | none (only `globalid`, `alias`, `children`) | Tidies the editor tree; it cannot lay anything out. |
+
+**Values:** `font_size` a number string or `"scaled"` · `font_weight` `"Thin"`…`"Heavy"` · `font_style` `"Normal"`/`"Italic"` · `align_x` `"Left"`/`"Center"`/`"Right"` · `align_y` `"Top"`/`"Center"`/`"Bottom"` · `truncate` `"AtEnd"`/`"None"`/`"SplitWord"` · `scale_type` `"Fit"`/`"Crop"`/`"Slice"`/`"Stretch"`/`"Tile"` · booleans `"true"`/`"false"`.
 
 ---
 
@@ -550,201 +241,22 @@ The child fills its parent (`{0,0},{0,0}` / `{1,0},{1,0}`) and `UIPadding` does 
 
 ### 2.7 Styling Modifier Elements
 
-**Styling elements must be children of a visual element.** Never siblings, never at the root, never inside a `Folder` — a modifier styles its parent, so a misplaced one either does nothing or fails import.
+**Styling elements must be children of a visual element.** Never siblings, never at the root, never inside a `Folder`. They have no `position`, `size` or `anchor` of their own. **Full examples are in [elements.md](https://raw.githubusercontent.com/Began2/SiteGPT/main/elements.md).**
 
-They carry no `position`, `size`, or `anchor` of their own (`UIGridLayout` and `UISizeConstraint` use `size`-shaped values, but as *settings*, not as their own geometry). Most work with zero configuration; the defaults below are what CatWeb writes for a freshly added modifier.
-
----
-
-#### `UICorner`
-
-Rounds the parent's corners.
-
-```json
-{"class": "UICorner", "globalid": "cr", "radius": "0,10"}
-```
-
-`radius` is a UDim — `"0,10"` is 10px, `"1,0"` is a full pill/circle.
-
-**Individual corners.** Round each corner differently with `radius_top_left`, `radius_top_right`, `radius_bottom_left` and `radius_bottom_right`, each a UDim. Use them for a tab that is only rounded on top, a dropdown attached to the element above it, or a chat bubble with one sharp corner.
-
-```json
-{"class": "UICorner", "globalid": "tc", "radius_top_left": "0,10", "radius_top_right": "0,10", "radius_bottom_left": "0,0", "radius_bottom_right": "0,0"}
-```
-
-In scripts the four are `Top Left Radius`, `Top Right Radius`, `Bottom Left Radius` and `Bottom Right Radius` (§7).
-
----
-
-#### `UIShadow`
-
-Drop shadow behind the parent. Use it on things that float above the page, such as dropdowns, modals, popovers and a lifted card on hover.
-
-```json
-{
-  "class": "UIShadow",
-  "globalid": "sh",
-  "shadow_color": "#000000",
-  "shadow_transparency": "0.6",
-  "shadow_offset": "{0,0},{0,4}",
-  "shadow_spread": "{0,2},{0,2}",
-  "blur_radius": "0,12"
-}
-```
-
-| Key | Format | Notes |
+| Class | Keys | Watch out |
 |---|---|---|
-| `shadow_color` | `"#rrggbb"` | Keep the `#`. Black, or a dark tint of the accent, on dark themes. |
-| `shadow_transparency` | `"0"`–`"1"` | `0.5`–`0.7` reads as a soft shadow; lower is harsher. |
-| `shadow_offset` | UDim2 | How far the shadow is shifted. Use pixel offsets (`"{0,0},{0,4}"` drops it 4px); scale values move it by a fraction of the parent's size. |
-| `shadow_spread` | UDim2 | How much bigger than the parent the shadow is, per axis. |
-| `blur_radius` | UDim | How soft the edge is, e.g. `"0,12"`. |
-
-Every key is optional; a bare `UIShadow` uses CatWeb's default shadow. It also accepts `z_index`.
-
----
-
-#### `UIStroke`
-
-Outline/border on the parent.
-
-```json
-{
-  "class": "UIStroke",
-  "globalid": "sk",
-  "stroke_color": "#262629",
-  "stroke_thickness": "1",
-  "stroke_transparency": "0",
-  "stroke_mode": "Border"
-}
-```
-
-`stroke_mode` is `"Border"` (outside the parent's edge) or `"Contextual"`.
+| `UICorner` | `radius` `radius_top_left` `radius_top_right` `radius_bottom_left` `radius_bottom_right` | UDims: `"0,10"` is 10px, `"1,0"` is a pill/circle. |
+| `UIShadow` | `shadow_color` `shadow_transparency` `shadow_offset` `shadow_spread` `blur_radius` `z_index` | Offset and spread are UDim2, blur is a UDim. Use pixel offsets, e.g. `"{0,0},{0,4}"`. |
+| `UIStroke` | `stroke_color` `stroke_thickness` `stroke_transparency` `stroke_mode` | `stroke_mode`: `Border`/`Contextual`. |
+| `UIPadding` | `top` `bottom` `left` `right` | Each a UDim, all optional. The only correct way to inset content (§2.6). |
+| `UIListLayout` | `direction` `padding` `sort` `alignment_horizontal` `alignment_vertical` `wrap_list` `horizontal_flex` `vertical_flex` | `padding` is the gap **between** children. Children need `order` (§2.3). Flex: `Fill`/`None`/`SpaceAround`/`SpaceBetween`/`SpaceEvenly`. |
+| `UIGridLayout` | `size` `padding` `sort` `alignment_horizontal` `alignment_vertical` | The cell size key is `size`, **never** `cell_size`. |
+| `UIGradient` | `gradient_color` `gradient_transparency` `rotation` | Stringified stop arrays with hex **without** `#`: `"[[0,\"4e9bff\"],[1,\"7274e0\"]]"`. |
+| `UIAspectRatioConstraint` | `ratio` | Width ÷ height: `"1"` square, `"1.78"` 16:9. |
+| `UISizeConstraint` | `min_size` `max_size` | `"x,y"` pixel pairs; `"inf"` means no limit. |
+| `UIFlexItem` | none | Opts one child of a `UIListLayout` out of its flex behaviour. |
 
 ---
-
-#### `UIPadding`
-
-Inner spacing. (§2.6).
-
-```json
-{
-  "class": "UIPadding",
-  "globalid": "pa",
-  "top": "0,20",
-  "bottom": "0,20",
-  "left": "0,24",
-  "right": "0,24"
-}
-```
-
-Each side is a UDim and each is optional — set only the sides you need. Never fake padding by offsetting a child's `position` and shrinking its `size`; the parent's edge does not move, so the content still hugs it.
-
----
-
-#### `UIListLayout`
-
-Lays children out in a row or column. The backbone of nearly every real page — it is what makes sections stack without manual Y offsets.
-
-```json
-{
-  "class": "UIListLayout",
-  "globalid": "ll",
-  "direction": "Vertical",
-  "padding": "0,24",
-  "sort": "LayoutOrder",
-  "alignment_horizontal": "Left",
-  "alignment_vertical": "Top",
-  "wrap_list": "false"
-}
-```
-
-`direction` is `"Vertical"`/`"Horizontal"`. `padding` is the **gap between children** as a UDim (`"0,24"` = 24px), not inner padding — that is `UIPadding`. Children need an integer `"order"` (§2.3); prefer `sort:"LayoutOrder"` over `"Name"`. `wrap_list:"true"` lets an overflowing horizontal row flow onto a second line (chips, tags).
-
-**Flex distribution.** Add `horizontal_flex` on a `direction:"Horizontal"` layout, or `vertical_flex` on a `direction:"Vertical"` one, to control how children share the leftover space along the layout axis. Values: `"Fill"` `"None"` `"SpaceAround"` `"SpaceBetween"` `"SpaceEvenly"`.
-
-```json
-{"class":"UIListLayout","globalid":"xg","direction":"Horizontal","sort":"LayoutOrder","horizontal_flex":"SpaceBetween","padding":"0,0"}
-```
-
-Use `"Fill"` to stretch children to consume all remaining space, `"SpaceBetween"`/`"SpaceAround"`/`"SpaceEvenly"` to distribute gaps between fixed-size children (nav bars, pricing tiers), `"None"` for the default packed behavior. To opt one specific child out of the parent's flex behavior, give it a `UIFlexItem` child (no properties of its own — see below).
-
----
-
-#### `UIGridLayout`
-
-Lays children out in equal-sized cells.
-
-```json
-{
-  "class": "UIGridLayout",
-  "globalid": "gl",
-  "size": "{0,340},{0,300}",
-  "padding": "0,20",
-  "sort": "LayoutOrder",
-  "alignment_horizontal": "Left",
-  "alignment_vertical": "Top"
-}
-```
-
-**The cell size key is `size` — not `cell_size`.** `Cell Size` is the *script-side* display name for the same property (§2.1b); snake_casing it into the JSON throws `default not found for property cell_size`. Cells are uniform, so `UIGridLayout` suits card grids; for rows of differing heights use a `UIListLayout` instead.
-
----
-
-#### `UIGradient`
-
-Gradient fill across the parent. One of the cheapest ways to add depth.
-
-```json
-{
-  "class": "UIGradient",
-  "globalid": "gd",
-  "gradient_color": "[[0,\"4e9bff\"],[1,\"7274e0\"]]",
-  "gradient_transparency": "[[0,\"0\"],[1,\"0.6\"]]",
-  "rotation": "90"
-}
-```
-
-`gradient_color` is a **stringified array of `[position, "hex"]` stops**, position `0`–`1`. **The hex values inside this array carry no `#`**: write `"4e9bff"`, not `"#4e9bff"`. Element properties like `background_color` keep the `#`; gradient stops and script values drop it (full rule in §5.7a). `rotation` is degrees (`"90"` = top-to-bottom). Spend 2–3 gradient moments per page, not one everywhere.
-
----
-
-#### `UIAspectRatioConstraint`
-
-Locks the parent's width:height ratio.
-
-```json
-{"class": "UIAspectRatioConstraint", "globalid": "ar", "ratio": "1"}
-```
-
-`ratio` is width ÷ height — `"1"` square, `"1.78"` for 16:9. Use it on icons and avatars so they stay square while their container flexes, and on media thumbnails to stop them distorting.
-
----
-
-#### `UISizeConstraint`
-
-Clamps the parent's pixel size.
-
-```json
-{"class": "UISizeConstraint", "globalid": "sz", "min_size": "280,0", "max_size": "1200,inf"}
-```
-
-Values are `"x,y"` pixel pairs; `"inf"` means unclamped on that axis. The main use is a readable max width on a content column: let it scale to the viewport but stop it stretching to an unreadable line length.
-
----
-
-#### `UIFlexItem`
-
-Overrides how a single child flexes inside a `UIListLayout` parent.
-
-```json
-{"class": "UIFlexItem", "globalid": "fx"}
-```
-
-Only meaningful inside a `UIListLayout`. It is the per-child escape hatch — the layout distributes space, and this element opts one child out of that default.
-
----
-
 
 ## 3. Layout & Positioning
 
@@ -1566,231 +1078,36 @@ Custom data on an element is **not** a property. Use the attribute actions `138`
 
 ## 9. The decoder: for really long strings only
 
-Roblox runs its text filter over CatWeb display text, so a string can come out masked as `######`. **For ordinary site copy this is rare, so write your text normally.** Headings, nav items, button labels, stat numbers and short body copy all go straight into `text` as plain strings.
+Roblox's text filter can occasionally mask display text as `######`. For ordinary site copy this is rare, so write text normally. The decoder exists only for **really long strings you wrote as site copy**. Never use it on user-entered text, broadcast payloads, or anything the filter would rightly block.
 
-The decoder exists for one case: **really long strings you wrote as site copy**, such as a long paragraph of body text, where there is more surface for the filter to trip on by mistake. **Never use it on user-entered text, on broadcast payloads, or on anything the filter would rightly block.** It is for false positives on your own copy, nothing else.
+**Before using it, open [decoder.md](https://raw.githubusercontent.com/Began2/SiteGPT/main/decoder.md).** It has the character code table, the decoder script to copy exactly, and the calling pattern. Never encode from memory: the codes are hand-computed, and a wrong one fails silently.
 
-**Do not encode by default.** Every encoded string is hand-computed, and a miscount fails *silently*: you get garbled characters, not an obvious `######`. Reach for the decoder only when a string is genuinely long.
-
-**When you do use it:**
-1. Add the decoder script (§9.2) as a `"class":"script"` element.
-2. Encode the string with the table (§9.1).
-3. Leave that label's JSON `text` as `""`.
-4. Set the text at runtime with a caller event (§9.3).
-
-**Compute encodings by reasoning, never with a tool call.** The `d`/`e` functions run inside the published site at runtime, so you do not need to execute them. Look each character up in §9.1 and build the digit string yourself.
-
-### 9.1 Character → code table
-
-Each character has a **code**: a number that never contains the digit `0`. That is what makes the format work, because `0` is the separator.
-
-**To encode:** look up each character's code, join the codes with `0`, and add one `0` at the start and one at the end.
-
-```
-"Cat"  ->  C=33, a=69, t=91  ->  0 33 0 69 0 91 0  ->  "0330690910"
-```
-
-Codes are **variable length** (1–3 digits). Do not pad them. Never write `00`.
-
-**Core table: space, punctuation, letters, digits.** This is everything normal site copy needs.
-
-| char | code | char | code | char | code | char | code | char | code | char | code |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| *(space)* | `1` | `!` | `2` | `"` | `3` | `#` | `4` | `$` | `5` | `%` | `6` |
-| `'` | `7` | `(` | `8` | `)` | `9` | `+` | `11` | `,` | `12` | `-` | `13` |
-| `.` | `14` | `/` | `15` | `{` | `16` | `\|` | `17` | `}` | `18` | `@` | `19` |
-| `~` | `21` | `→` | `22` | `’` | `23` | `—` | `24` | `&` | `25` | `:` | `26` |
-| `;` | `27` | `?` | `28` | `=` | `29` | `A` | `31` | `B` | `32` | `C` | `33` |
-| `D` | `34` | `E` | `35` | `F` | `36` | `G` | `37` | `H` | `38` | `I` | `39` |
-| `J` | `41` | `K` | `42` | `L` | `43` | `M` | `44` | `N` | `45` | `O` | `46` |
-| `P` | `47` | `Q` | `48` | `R` | `49` | `S` | `51` | `T` | `52` | `U` | `53` |
-| `V` | `54` | `W` | `55` | `X` | `56` | `Y` | `57` | `Z` | `58` | `[` | `59` |
-| `\` | `61` | `]` | `62` | `^` | `63` | `_` | `64` | `` ` `` | `65` | `<` | `66` |
-| `>` | `67` | `*` | `68` | `a` | `69` | `b` | `71` | `c` | `72` | `d` | `73` |
-| `e` | `74` | `f` | `75` | `g` | `76` | `h` | `77` | `i` | `78` | `j` | `79` |
-| `k` | `81` | `l` | `82` | `m` | `83` | `n` | `84` | `o` | `85` | `p` | `86` |
-| `q` | `87` | `r` | `88` | `s` | `89` | `t` | `91` | `u` | `92` | `v` | `93` |
-| `w` | `94` | `x` | `95` | `y` | `96` | `z` | `97` | `1` | `98` | `2` | `99` |
-| `3` | `111` | `4` | `112` | `5` | `113` | `6` | `114` | `7` | `115` | `8` | `116` |
-| `9` | `117` | `0` | `118` |  |  |  |  |  |  |  |  |
-
-**Extended Latin** (accented names, symbols, currency). Same rules.
-
-| char | code | char | code | char | code | char | code | char | code | char | code |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| `⌦` | `119` | `€` | `121` | `ƒ` | `122` | `„` | `123` | `…` | `124` | `†` | `125` |
-| `‡` | `126` | `ˆ` | `127` | `‰` | `128` | `Š` | `129` | `‹` | `131` | `Œ` | `132` |
-| `Ž` | `133` | `‘` | `134` | *(unused)* | `135` | `“` | `136` | `”` | `137` | `•` | `138` |
-| `–` | `139` | *(unused)* | `141` | `˜` | `142` | `™` | `143` | `š` | `144` | `›` | `145` |
-| `œ` | `146` | `ž` | `147` | `Ÿ` | `148` | `¡` | `149` | `¢` | `151` | `£` | `152` |
-| `¤` | `153` | `¥` | `154` | `¦` | `155` | `§` | `156` | `¨` | `157` | `©` | `158` |
-| `ª` | `159` | `«` | `161` | `¬` | `162` | `®` | `163` | `¯` | `164` | `°` | `165` |
-| `±` | `166` | `²` | `167` | `³` | `168` | `´` | `169` | `µ` | `171` | `¶` | `172` |
-| `·` | `173` | `¸` | `174` | `¹` | `175` | `º` | `176` | `»` | `177` | `¼` | `178` |
-| `½` | `179` | `¾` | `181` | `¿` | `182` | `À` | `183` | `Á` | `184` | `Â` | `185` |
-| `Ã` | `186` | `Ä` | `187` | `Å` | `188` | `Æ` | `189` | `Ç` | `191` | `È` | `192` |
-| `É` | `193` | `Ê` | `194` | `Ë` | `195` | `Ì` | `196` | `Í` | `197` | `Î` | `198` |
-| `Ï` | `199` | `Ð` | `211` | `Ñ` | `212` | `Ò` | `213` | `Ó` | `214` | `Ô` | `215` |
-| `Õ` | `216` | `Ö` | `217` | `×` | `218` | `Ø` | `219` | `Ù` | `221` | `Ú` | `222` |
-| `Û` | `223` | `Ü` | `224` | `Ý` | `225` | `Þ` | `226` | `ß` | `227` | `à` | `228` |
-| `á` | `229` | `â` | `231` | `ã` | `232` | `ä` | `233` | `å` | `234` | `æ` | `235` |
-| `ç` | `236` | `è` | `237` | `é` | `238` | `ê` | `239` | `ë` | `241` | `ì` | `242` |
-| `í` | `243` | `î` | `244` | `ï` | `245` | `ð` | `246` | `ñ` | `247` | `ò` | `248` |
-| `ó` | `249` | `ô` | `251` | `õ` | `252` | `ö` | `253` | `÷` | `254` | `ø` | `255` |
-| `ù` | `256` | `ú` | `257` | `û` | `258` | `ü` | `259` | `ý` | `261` | `þ` | `262` |
-| `ÿ` | `263` | *(newline)* | `264` |  |  |  |  |  |  |  |  |
-
-**Two unused slots.** Codes `135` and `141` are placeholders (`!!`) in the decoder's table. Never use them. Characters not in these tables cannot be encoded; rephrase without them.
-
-### 9.2 The decoder script: copy it exactly
-
-The decoder is **three blocks**: a `When website loaded` setup event that builds the character tables, `Define function d` (decode) and `Define function e` (encode, which you will rarely need). Copy them exactly as given:
-
-- **Do not edit, rename, reformat or reorder anything** in these three blocks. Keep every globalid, action id, variable name, `x`/`y` value and escape sequence (`\u000B`, `\f`, `\\{`, `%%`).
-- **It is the one exception to the house rules.** Its globalids use punctuation (and one, `" a"`, starts with a space), its variables have word names (`o!nums`, `l!temp`), and its functions take a numeric parameter (`3`). Do not "fix" any of this. The rules in §2.1, §5.3a and §5.7 apply to everything *you* generate.
-- **Never reuse a decoder globalid** elsewhere in the file. The alphanumeric ones are: `XD fT ri Pr np 7W Eh UX Ub ig Vn dN rO gs 29 ci 0H wh gb b9 M8 ph qT Ua`.
-- **It is exported as a one-item array** (`[{...}]`). Place the object inside the brackets into a `children` array. Do not nest the brackets.
-- **The only thing you may add** is your own caller event(s) appended to the end of its `content` array (§9.3). If a user pastes a decoder carrying other extra blocks, strip it back to these three blocks plus your callers.
-
-```json
-[{"enabled":"true","content":[{"y":"4626","x":"5498","globalid":" a","id":"0","text":["When website loaded..."],"actions":[{"id":"11","text":["Set",{"value":"o!1","t":"string","l":"variable"},"to",{"value":"! \" # $ !! ' ( ) + , - . / \\{ | \\} @ ~ → ’ — & : ; ? = A B C D E F G H I J K L M N O P Q R S T U V W X Y Z [ \\ ] ^ _ ` < > * a b c d e f g h i j k l m n o p q r s t u v w x y z ","t":"string","l":"any"}],"globalid":"#W"},{"id":"11","text":["Set",{"value":"o!1","t":"string","l":"variable"},"to",{"value":"{o!1}1 2 3 4 5 6 7 8 9 0 ","t":"string","l":"any"}],"globalid":"fT"},{"id":"11","text":["Set",{"value":"o!1","t":"string","l":"variable"},"to",{"value":"{o!1}⌦ € ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ !! “ ” • – !! ˜ ™ š › œ ž Ÿ ¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ® ¯ ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿ À Á Â Ã Ä Å Æ Ç È É Ê Ë Ì Í Î Ï Ð Ñ Ò Ó Ô Õ Ö × Ø Ù Ú Û Ü Ý Þ ß à á â ã ä å æ ç è é ê ë ì í î ï ð ñ ò ó ô õ ö ÷ ø ù ú û ü ý þ ÿ \n","t":"string","l":"any"}],"globalid":"3#"},{"id":"57","text":["Split",{"value":"{o!1}","t":"string"},{"value":" ","t":"string","l":"separator"},"→",{"value":"o!2","t":"string","l":"table"}],"globalid":"$x"},{"id":"89","text":["Insert",{"value":" ","t":"string","l":"any"},"at position",{"value":"1","t":"number","l":"number?"},"of",{"value":"o!2","t":"string","l":"array"}],"globalid":"=L"},{"text":["Set entry",{"value":"6","t":"string","l":"entry"},"of",{"value":"o!2","t":"string","l":"table"},"to",{"value":"%%","t":"string","l":"any"}],"globalid":"$|","id":"55"},{"id":"57","text":["Split",{"value":"1 2 3 4 5 6 7 8 9 11 12 13 14 15 16 17 18 19 21 22 23 24 25 26 27 28 29 31 32 33 34 35 36 37 38 39 41 42 43 44 45 46 47 48 49 51 52 53 54 55 56 57 58 59 61 62 63 64 65 66 67 68 69 71 72 73 74 75 76 77 78 79 81 82 83 84 85 86 87 88 89 91 92 93 94 95 96 97 98 99 111 112 113 114 115 116 117 118 119 121 122 123 124 125 126 127 128 129 131 132 133 134 135 136 137 138 139 141 142 143 144 145 146 147 148 149 151 152 153 154 155 156 157 158 159 161 162 163 164 165 166 167 168 169 171 172 173 174 175 176 177 178 179 181 182 183 184 185 186 187 188 189 191 192 193 194 195 196 197 198 199 211 212 213 214 215 216 217 218 219 221 222 223 224 225 226 227 228 229 231 232 233 234 235 236 237 238 239 241 242 243 244 245 246 247 248 249 251 252 253 254 255 256 257 258 259 261 262 263 264 265 266 267 268 269 271 272 273 274 275 276 277 278 279 281 282 283 284 285 286 287 288 289 291 292 293 294 295 296 297 298 299","t":"string"},{"value":" ","t":"string","l":"separator"},"→",{"value":"{o!nums}","t":"string","l":"table"}],"globalid":"ri"},{"id":"57","text":["Split",{"value":"0123456789","t":"string"},{"value":"","t":"string","l":"separator"},"→",{"value":"o!rnum","t":"string","l":"table"}],"globalid":"Pr"}],"width":"350"},{"y":"4623","variable_overrides":[{"value":"3"}],"x":"5133","globalid":"np","id":"6","text":["Define function",{"value":"d","t":"string","l":"function"}],"actions":[{"text":["If",{"value":"{o!2}","t":"string","l":"variable"},"doesn't exist"],"globalid":"7W","id":"93"},{"id":"3","text":["Wait",{"value":"0.01","t":"number"},"seconds"],"globalid":"?U"},{"id":"25","text":["end"],"globalid":"Eh"},{"id":"43","text":["Replace",{"value":"0","t":"string"},"in",{"value":"{l!3}","t":"string","l":"variable"},"by",{"value":"\u000B\f","t":"string"}],"globalid":"*)"},{"id":"113","text":["Iterate through",{"value":"{o!nums}","t":"string","l":"table"},"({l!index},{l!value})"],"globalid":"d?"},{"text":["If",{"value":"{l!3}","t":"string"},"contains",{"value":"{l!value}","t":"string"}],"globalid":"UX","id":"37"},{"id":"56","text":["Get entry",{"value":"{l!index}","t":"string","l":"entry"},"of",{"value":"{o!2}","t":"string","l":"table"},"→",{"value":"{l!ac}","t":"string","l":"variable"}],"globalid":"Ub"},{"id":"43","text":["Replace",{"value":"\f{l!value}\u000B","t":"string"},"in",{"value":"{l!3}","t":"string","l":"variable"},"by",{"value":"{l!ac}","t":"string"}],"globalid":"S`"},{"id":"25","text":["end"],"globalid":"#%"},{"id":"25","text":["end"],"globalid":"ig"},{"id":"42","text":["Sub",{"value":"{l!3}","t":"string","l":"variable"},{"value":"2","t":"number","l":"start"},"-",{"value":"-2","t":"number","l":"end"}],"globalid":"Vn"},{"id":"115","text":["Return",{"value":"{l!3}","t":"string","l":"any"}],"globalid":"dN"}],"width":"350"},{"y":"4623","variable_overrides":[{"value":"3"}],"x":"4767","globalid":"rO","id":"6","text":["Define function",{"value":"e","t":"string","l":"function"}],"actions":[{"text":["If",{"value":"{o!2}","t":"string","l":"variable"},"doesn't exist"],"globalid":"gs","id":"93"},{"id":"3","text":["Wait",{"value":"0.01","t":"number"},"seconds"],"globalid":";|"},{"id":"25","text":["end"],"globalid":"29"},{"id":"43","text":["Replace",{"value":"\f","t":"string"},"in",{"value":"{l!3}","t":"string","l":"variable"},"by",{"value":"","t":"string"}],"globalid":"ci"},{"id":"43","text":["Replace",{"value":"\u000B","t":"string"},"in",{"value":"{l!3}","t":"string","l":"variable"},"by",{"value":"","t":"string"}],"globalid":"=x"},{"id":"113","text":["Iterate through",{"value":"o!2","t":"string","l":"table"},"({l!index},{l!value})"],"globalid":"'6"},{"text":["If",{"value":"{l!3}","t":"string"},"contains",{"value":"{l!value}","t":"string"}],"globalid":"!W","id":"37"},{"id":"43","text":["Replace",{"value":"{l!value}","t":"string"},"in",{"value":"{l!3}","t":"string","l":"variable"},"by",{"value":"{l!value}\f","t":"string"}],"globalid":"9?"},{"id":"25","text":["end"],"globalid":"0H"},{"id":"25","text":["end"],"globalid":"$p"},{"id":"113","text":["Iterate through",{"value":"o!2","t":"string","l":"table"},"({l!index},{l!value})"],"globalid":"a:"},{"text":["If",{"value":"{l!3}","t":"string"},"contains",{"value":"{l!value}","t":"string"}],"globalid":"n}","id":"37"},{"id":"56","text":["Get entry",{"value":"{l!index}","t":"string","l":"entry"},"of",{"value":"{o!nums}","t":"string","l":"table"},"→",{"value":"{l!an}","t":"string","l":"variable"}],"globalid":"wh"},{"id":"43","text":["Replace",{"value":"{l!value}\f","t":"string"},"in",{"value":"{l!3}","t":"string","l":"variable"},"by",{"value":"0{l!an}0","t":"string"}],"globalid":"'u"},{"id":"25","text":["end"],"globalid":"5-"},{"id":"25","text":["end"],"globalid":"gb"},{"id":"43","text":["Replace",{"value":"%","t":"string"},"in",{"value":"{l!3}","t":"string","l":"variable"},"by",{"value":"060","t":"string"}],"globalid":"b9"},{"id":"43","text":["Replace",{"value":"00","t":"string"},"in",{"value":"{l!3}","t":"string","l":"variable"},"by",{"value":"0","t":"string"}],"globalid":"=m"},{"id":"11","text":["Set",{"value":"{l!temp}","t":"string","l":"variable"},"to",{"value":"{l!3}","t":"string","l":"any"}],"globalid":"S{"},{"id":"113","text":["Iterate through",{"value":"o!rnum","t":"string","l":"table"},"({l!index},{l!value})"],"globalid":"e,"},{"id":"43","text":["Replace",{"value":"{l!value}","t":"string"},"in",{"value":"{l!temp}","t":"string","l":"variable"},"by",{"value":"","t":"string"}],"globalid":")w"},{"id":"25","text":["end"],"globalid":":k"},{"text":["If",{"value":"{l!temp}","t":"string","l":"any"},"is not equal to",{"value":"","t":"string","l":"any"}],"globalid":"<B","id":"19"},{"id":"57","text":["Split",{"value":"{l!temp}","t":"string"},{"value":"","t":"string","l":"separator"},"→",{"value":"{l!temp}","t":"string","l":"table"}],"globalid":"]p"},{"id":"113","text":["Iterate through",{"value":"{l!temp}","t":"string","l":"table"},"({l!index},{l!value})"],"globalid":"M8"},{"id":"43","text":["Replace",{"value":"{l!value}","t":"string"},"in",{"value":"{l!3}","t":"string","l":"variable"},"by",{"value":"","t":"string"}],"globalid":"ph"},{"id":"25","text":["end"],"globalid":"z%"},{"id":"25","text":["end"],"globalid":"qT"},{"id":"43","text":["Replace",{"value":"00","t":"string"},"in",{"value":"{l!3}","t":"string","l":"variable"},"by",{"value":"0","t":"string"}],"globalid":"I("},{"id":"115","text":["Return",{"value":"{l!3}","t":"string","l":"any"}],"globalid":"Ua"}],"width":"350"}],"globalid":"XD","class":"script","alias":"Decode"}]
-```
-
-### 9.3 Calling pattern
-
-The decoder's character tables live in **object-scoped** variables (`{o!2}`, `{o!nums}`), which are private to the decoder's script element (§5.7). So **every `Run function d` call goes in a caller event appended to the decoder's own `content` array**, not in a separate script. A different script element cannot see those tables and will render blank or garbled text. Reference the target label by `globalid`, which resolves anywhere in the file.
-
-Start the caller with a short `Wait`. The setup event runs in parallel with yours, and `d` waits only one tick for the tables to exist.
-
-```json
-{"id":"0","text":["When website loaded..."],"globalid":"dc","x":"5498","y":"5100","width":"350","actions":[
-  {"id":"3","text":["Wait (0.1)",{"value":"0.1","t":"number"},"seconds"],"globalid":"dw"},
-  {"id":"132","text":["Run function (d)",{"value":"d","t":"string","l":"function"},{"value":[{"value":"0330690910","t":"string","l":"any"}],"t":"tuple"},"→ (80)",{"value":"80","t":"string","l":"variable?"}],"globalid":"dr"},
-  {"id":"10","text":["Set (lb1)",{"value":"lb1","t":"object"},"text to ({80})",{"value":"{80}","t":"string"}],"globalid":"ds"}
-]}
-```
-
-For several strings, repeat the `Run function` + `Set text` pair inside the same caller event, with a different numeric output variable each time.
 ---
 
 ## 10. Icon Library
 
-**84 pre-uploaded Lucide icons**, 256×256px, pure white (`#ffffff`), 2px stroke, rounded caps. **To use:** an `ImageLabel` with the `image_id` below, `image_color` to tint, `background_transparency:"1"`. Sizes: `"{0,16},{0,16}"` inline, `"{0,24},{0,24}"` default, `"{0,32},{0,32}"` card. **Tint:** white on dark `"#ffffff"`; dark on light `"#1a1a1a"`; muted `"#888888"`; or the accent. **Pair with text:** icon + `TextLabel` in a horizontal `UIListLayout`, both `size:"auto"`.
+84 pre-uploaded Lucide icons, pure white so they tint cleanly. Use an `ImageLabel` with `image`/`image_id` set to the ID, `image_color` to tint, and `background_transparency:"1"`. Sizes: `"{0,16},{0,16}"` inline, `"{0,24},{0,24}"` default, `"{0,32},{0,32}"` on cards.
 
-| # | Name | Asset ID | Common uses |
+The most common ones:
+
+| Name | Asset ID | Name | Asset ID |
 |---|---|---|---|
-| 1 | `house` | `128490289676597` | Home, navbar brand |
-| 2 | `search` | `76297972789266` | Search bar/button |
-| 3 | `user-round` | `117017076630548` | Profile, account, avatar |
-| 4 | `settings` | `123045282429289` | Settings, admin |
-| 5 | `mail` | `114078871101444` | Contact, email, newsletter |
-| 6 | `star` | `73775766036081` | Ratings, favorites, featured |
-| 7 | `heart` | `81821025513215` | Like, save, wishlist |
-| 8 | `arrow-left` | `132053311021067` | Back, previous |
-| 9 | `arrow-right` | `86341424256591` | Next, CTA suffix |
-| 10 | `plus` | `128762341789893` | Add, create, expand |
-| 11 | `x` | `97241930499310` | Close, dismiss, remove |
-| 12 | `pencil` | `76098741870595` | Edit, blog, update |
-| 13 | `trash` | `106229864631841` | Delete, remove |
-| 14 | `download` | `111132539535750` | Download, export |
-| 15 | `upload` | `92547022320190` | Upload, submit media |
-| 16 | `link` | `128161995104832` | External link, share |
-| 17 | `info` | `132978996034921` | Tooltip, info, help |
-| 18 | `triangle-alert` | `101044232164905` | Warning, error, caution |
-| 19 | `grid-2x2` | `133463448364347` | Gallery/grid toggle, app menu |
-| 20 | `bell` | `130734329855948` | Notifications |
-| 21 | `bell-off` | `131313860737094` | Muted notifications |
-| 22 | `menu` | `84352806499655` | Hamburger toggle |
-| 23 | `check` | `99802726511524` | Success, completed, valid |
-| 24 | `chevron-down` | `87080095544609` | Dropdown, accordion open |
-| 25 | `chevron-up` | `96573229929402` | Collapse, accordion close |
-| 26 | `clock` | `82968254856227` | Timestamp, duration |
-| 27 | `calendar` | `123093358000872` | Date picker, events |
-| 28 | `eye` | `88997485015923` | Show password, reveal |
-| 29 | `eye-off` | `139554241318642` | Hide password |
-| 30 | `lock` | `99601667182985` | Security, gated |
-| 31 | `lock-open` | `128013412438498` | Unlocked, access granted |
-| 32 | `share-2` | `114039748228833` | Social sharing |
-| 33 | `external-link` | `122444800533384` | Outbound link |
-| 34 | `copy` | `130977740797889` | Copy to clipboard |
-| 35 | `rotate-cw` | `103831305015789` | Refresh, reload, retry |
-| 36 | `funnel` | `91180148376757` | Filter controls |
-| 37 | `list-sort-ascending` | `132178203048228` | Sort A→Z |
-| 38 | `list-sort-descending` | `96229858716187` | Sort Z→A |
-| 39 | `arrow-up-right` | `118136232094518` | External link w/ direction |
-| 40 | `loader` | `100424218947821` | Loading, spinner |
-| 41 | `loader-circle` | `81239384648948` | Loading spinner (circular) |
-| 42 | `ellipsis-vertical` | `81626897936532` | Overflow menu (vertical) |
-| 43 | `ellipsis` | `139825203386447` | Overflow menu (horizontal) |
-| 44 | `bookmark` | `92628008144421` | Save/bookmark |
-| 45 | `message-circle` | `74178575771264` | Comments, feedback, chat |
-| 46 | `volume-2` | `103516276905873` | Volume, audio on |
-| 47 | `sun` | `80788164629601` | Light mode |
-| 48 | `moon` | `124700849271660` | Dark mode |
-| 49 | `zap` | `98819316845453` | Premium badge, power |
-| 50 | `map` | `92300540805299` | Maps, locations |
-| 51 | `map-pin` | `116471861153777` | Location marker |
-| 52 | `phone` | `133427066456170` | Phone, support, call |
-| 53 | `folder` | `93755286057513` | File manager, project |
-| 54 | `shopping-bag` | `110888789046931` | Store, cart, purchase |
-| 55 | `store` | `76740445213011` | Marketplace, storefront |
-| 56 | `users-round` | `103128988356985` | Team, group |
-| 57 | `layers` | `80429653768693` | Stacked content, versions |
-| 58 | `layout-grid` | `94828998904657` | Dashboard grid, workspace |
-| 59 | `wallet` | `100717817674057` | Finances, balance |
-| 60 | `megaphone` | `105447664594265` | Ads, announcements |
-| 61 | `image` | `76478225596850` | Image/media placeholder |
-| 62 | `shopping-cart` | `117074905498023` | Cart, checkout |
-| 63 | `send` | `118501485251954` | Submit, compose, contact |
-| 64 | `shield-check` | `116015031695975` | Verified, trust badge |
-| 65 | `play` | `100984531058540` | Video/media play, demo |
-| 66 | `globe` | `132473860015433` | Language/region, global |
-| 67 | `badge-check` | `75364661852335` | Verified badge |
-| 68 | `list` | `126181252830019` | List view, itemized |
-| 69 | `refresh-cw` | `122404692422803` | Sync, refresh |
-| 70 | `save` | `139830175443527` | Save, draft |
-| 71 | `sliders-horizontal` | `100952596126070` | Settings/filter controls |
-| 72 | `trending-up` | `117604461413371` | Growth, analytics |
-| 73 | `lightbulb` | `114237527539643` | Idea/tip, insight |
-| 74 | `history` | `132539284401125` | History, recent activity |
-| 75 | `file` | `119100927707815` | Single file/attachment |
-| 76 | `brain` | `110674321553035` | AI/intelligence |
-| 77 | `credit-card` | `122689283993405` | Billing, payment, plan |
-| 78 | `shield` | `132071632855830` | Protection, privacy |
-| 79 | `minus` | `137413491041285` | Remove, collapse |
-| 80 | `dot` | `115463795068023` | Status marker, bullet |
-| 81 | `camera` | `90172905139857` | Photo capture, upload |
-| 82 | `package` | `82366494295497` | Product/shipping, bundle |
-| 83 | `flame` | `136802848902260` | Trending, streak, popular |
-| 84 | `ban` | `134524065816559` | Blocked, restricted |
+| `house` | `128490289676597` | `search` | `76297972789266` |
+| `user-round` | `117017076630548` | `settings` | `123045282429289` |
+| `mail` | `114078871101444` | `star` | `73775766036081` |
+| `heart` | `81821025513215` | `arrow-right` | `86341424256591` |
+| `plus` | `128762341789893` | `x` | `97241930499310` |
+| `check` | `99802726511524` | `menu` | `84352806499655` |
+| `chevron-down` | `87080095544609` | `info` | `132978996034921` |
+| `lock` | `99601667182985` | `external-link` | `122444800533384` |
+
+**For any other icon, open [icons.md](https://raw.githubusercontent.com/Began2/SiteGPT/main/icons.md).** Never invent an icon ID. If no listed icon fits, say so.
 
 ---
 
 ## 11. Sound Library
 
-A set of **8 pre-uploaded UI sound assets** for interface feedback. **To use:** play with the audio actions from §5.5 — `Play audio` (id `5`) for one-shots, `Play looped audio` (id `26`) for loops; capture the returned handle in the optional `<var?>` slot, then control it with `Set volume` (id `73`), `Set speed` (id `77`), `Stop audio` (id `74`), `Pause` (id `75`), `Resume` (id `76`), or `Stop all audio` (id `7`).
-
-**Durations shown are nominal — several read as `0:00` because the clip is under a second, not because it is empty.** Do not treat a `0:00` sound as faulty.
-
-**Concurrent-sound limit is 150 (§8).** For rapid-fire feedback (e.g. a click on every keystroke), reuse a single handle and restart it rather than spawning a new sound each time.
-
-| # | Name | Asset ID | Nominal length | Intended use |
-|---|---|---|---|---|
-| 1 | `click` | `88442833509532` | 0:00 | Primary button / tap feedback (simple UI click) |
-| 2 | `hover` | `107511012621133` | 0:00 | Subtle tick on mouse-enter for interactive elements |
-| 3 | `toggle` | `94316899429786` | 0:00 | Switch / checkbox on-off |
-| 4 | `success` | `136211732441165` | 0:02 | Confirmation / completed action (positive chime) |
-| 5 | `error` | `131661013076677` | 0:00 | Invalid input / failed action (soft buzz) |
-| 6 | `notification` | `131039887376992` | 0:00 | Incoming message / alert |
-| 7 | `send` | `5485567028` | 0:00 | Message / form submit (outgoing) |
-| 8 | `transition` | `119137729729534` | 0:01 | Page / view change (whoosh) |
-
-**Play-sound example (with the §5.1a `()` convention):**
-```json
-{"id":"5","text":["Play audio (88442833509532)",{"value":"88442833509532","t":"string","assetbrowser":"audio","l":"id"},"→ (o!20)",{"value":"o!20","t":"string","l":"variable?"}],"globalid":"p1"}
-```
-
-Wire these to the natural events: `click`/`toggle` on `When <button> pressed` (id `1`), `hover` on `When mouse enters` (id `3`), `success`/`error` after a form's `When <input> submitted` (id `8`) branch, `notification` on `When message received` (id `9`), `send` on submit, `transition` before a `Redirect` (id `4`) or a view swap. **These are the only confirmed pre-uploaded sound IDs — never invent additional sound asset IDs; flag any other sound the user needs.**
+Eight pre-uploaded UI sounds: `click`, `hover`, `toggle`, `success`, `error`, `notification`, `send` and `transition`. **Open [sounds.md](https://raw.githubusercontent.com/Began2/SiteGPT/main/sounds.md) for their IDs** and a play example. Never invent a sound ID.
 
 ---
 
