@@ -13,6 +13,8 @@ The main guide links to the companion files below. AIs that can browse open them
 | `SiteGPT V12.md` | The main guide |
 | `elements.md` | Full description and example of every element class and styling modifier |
 | `example-site.md` | A complete, import-valid landing page to model on |
+| `scripts.md` | Every event and action with its exact shape, plus complete worked scripts |
+| `datastore.md` | Saving data and sharing it between users with a relay account |
 | `icons.md` | All 84 pre-uploaded icon IDs |
 | `sounds.md` | The 8 pre-uploaded UI sound IDs |
 | `decoder.md` | Character code table, decoder script and calling pattern for long strings |

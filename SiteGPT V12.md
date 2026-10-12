@@ -21,6 +21,8 @@ Some reference material lives in separate files so this guide stays short. Open 
 | `elements.md` | You need more than the summary tables in §2.4/§2.7: a class's full description or a complete example | https://raw.githubusercontent.com/Began2/SiteGPT/main/elements.md |
 | `example-site.md` | You're building a whole site and want a complete, import-valid page to model on | https://raw.githubusercontent.com/Began2/SiteGPT/main/example-site.md |
 | `icons.md` | The site needs an icon that isn't in §10's short list | https://raw.githubusercontent.com/Began2/SiteGPT/main/icons.md |
+| `scripts.md` | A script needs an action that isn't in §5.5's most-used table, or you want a complete worked script | https://raw.githubusercontent.com/Began2/SiteGPT/main/scripts.md |
+| `datastore.md` | The site must save data across visits or share it between users (§5.10) | https://raw.githubusercontent.com/Began2/SiteGPT/main/datastore.md |
 | `sounds.md` | The site plays a sound | https://raw.githubusercontent.com/Began2/SiteGPT/main/sounds.md |
 | `decoder.md` | A string is genuinely long (§9) | https://raw.githubusercontent.com/Began2/SiteGPT/main/decoder.md |
 
@@ -36,7 +38,7 @@ These apply to all CatWeb JSON, whether you are writing it or checking it.
 2. **Every scalar is a quoted string.** No raw numbers, booleans, or nulls. `"12"`, `"true"`. → §2.1
 3. **Every `globalid` you generate matches `[A-Za-z0-9]{2,3}`** and is unique across the file. No spaces, quotes, backslashes, punctuation. (The decoder's own ids are copied verbatim and are the one exception. Never reuse one of them, §9.2.) → §2.1
 4. **Every `alias` is unique** across the file, lowercase, and non-placeholder. → §2.2
-5. **Only action/event `id`s from the authoritative table (§5.5), each built to the EXACT parameter shape that table gives.** Events and actions are two separate numbering systems: `0` is "When website loaded" as an event but "Log" as an action. Look the id up in the table for where the block sits. → §5.5
+5. **Only action/event `id`s from the authoritative tables (§5.5 for the most-used, scripts.md for all), each built to the EXACT parameter shape given there.** Events and actions are two separate numbering systems: `0` is "When website loaded" as an event but "Log" as an action. Look the id up in the table for where the block sits. → §5.5
 6. **No emoji or special Unicode arrow/directional glyphs in generated site text.** Use the icon library (§10).
 7. **Only use documented property keys.** Every property name on an element must be one this guide lists for that class (§2.1, §2.4, §2.7). An unknown, misspelled, or wrong-class key throws a fatal `[INVALIDATED] default not found for property <key>` at import.
 8. **Variable names are numbers.** Every script variable (global `{N}`, object `{o!N}`, local `{l!N}`) is named with an integer. Never a word like `count` or `score`. (The only exceptions are the built-in `{l!index}`/`{l!value}` from `Iterate through`, the event-provided `{messageContent}`-style values, and the decoder copied verbatim.) → §5.7
@@ -161,7 +163,7 @@ Each entry is `{"name":{"value":"<name>"},"value":{"value":"<value>"}}`, with bo
 
 ### 2.2 Naming Elements (`alias`)
 
-Give every meaningful visual element a short, lowercase, purpose-naming `alias` (`navbar`, `herotitle`, `statcard1`). Object parameters in scripts always resolve by `globalid`, so the alias mainly makes the tree readable in the CatWeb editor. The exceptions are `sort:"Name"` and the `Find child/ancestor/descendant named` actions, which match on it (§5.9c). Keep them unique so the editor's object list stays navigable. Styling modifiers (`UICorner`, `UIPadding`, etc.) don't need descriptive aliases.
+Give every meaningful visual element a short, lowercase, purpose-naming `alias` (`navbar`, `herotitle`, `statcard1`). Object parameters in scripts always resolve by `globalid`, so the alias mainly makes the tree readable in the CatWeb editor. The exceptions are `sort:"Name"` and the `Find child/ancestor/descendant named` actions, which match on it. Keep them unique so the editor's object list stays navigable. Styling modifiers (`UICorner`, `UIPadding`, etc.) don't need descriptive aliases.
 
 ---
 
@@ -344,9 +346,9 @@ If all sizes/positions use scale values (0–1) rather than fixed offsets, the l
 
 ### 5.1 Common script mistakes (before → after)
 
-The most common import failure is a wrong `id`. IDs are a fixed vocabulary, but **events and actions are numbered separately, and an id's meaning depends on where the block sits.** A block at the top level of `content` is an event (or `Define function`). A block inside an `actions` array is an action. The same number means different things in each place (see the overlap table in §5.5). Use §5.5 as the source; don't invent or guess one.
+The most common import failure is a wrong `id`. IDs are a fixed vocabulary, but **events and actions are numbered separately, and an id's meaning depends on where the block sits.** A block at the top level of `content` is an event (or `Define function`). A block inside an `actions` array is an action. The same number means different things in each place (see the overlap table in §5.5). Use §5.5 (or the full list in scripts.md) as the source; don't invent or guess one.
 
-1. **Invented `id`.** Only ids from §5.5 exist — an id not in that table isn't a real action.
+1. **Invented `id`.** Only ids listed in §5.5 or scripts.md exist — anything else isn't a real action.
 2. **Flat string instead of text-array.** WRONG: `"text": "Set 40 to hello"`. RIGHT: `"text": ["Set (40)", {"value":"40","t":"string","l":"variable"}, "to (hello)", {"value":"hello","t":"string","l":"any"}]`.
 3. **Nested If/else as JSON children.** Control flow is flat: an `If`, its body actions, then `end` (id `25`) — all siblings in the same `actions` array, not a nested subtree.
 4. **`Define function` inside an event's `actions`.** Functions are top-level entries in the script's `content`, siblings of events — not nested inside one.
@@ -463,7 +465,7 @@ Parameter objects have `"value"` (content), `"t"` (type: `"string"`/`"number"`/`
 
 ### 5.4a `t`/`l` are fixed PER PARAMETER SLOT — never inferred from what the value looks like
 
-**This is the single highest-value correction in this guide.** Every action's parameter list has a fixed, pre-determined `t`/`l` pair per position — baked into CatWeb's own block definition, not something you choose based on what the value semantically *is*. It is tempting to reason "this value is a variable name, so it should carry `l:"variable"`" — that reasoning is **wrong** for most positions and is exactly the class of "almost right" shape that imports fine and fails publish. Always copy the `t`/`l` pair for the exact action `id` from §5.5/§5.8a verbatim, regardless of what the value looks like.
+**This is the single highest-value correction in this guide.** Every action's parameter list has a fixed, pre-determined `t`/`l` pair per position — baked into CatWeb's own block definition, not something you choose based on what the value semantically *is*. It is tempting to reason "this value is a variable name, so it should carry `l:"variable"`" — that reasoning is **wrong** for most positions and is exactly the class of "almost right" shape that imports fine and fails publish. Always copy the `t`/`l` pair for the exact action `id` from §5.5 or scripts.md verbatim, regardless of what the value looks like.
 
 **The clearest trap — two different shapes both called "any":**
 
@@ -488,11 +490,11 @@ Confusing these two is invisible at import (both are structurally valid paramete
 
 - **A parameter object carries ONLY `value`, `t`, `l`, and (where the palette shows them) `assetbrowser`/`href` — never an extra or duplicate key.** No `t2`, no second `l`, no `type`. If you catch yourself writing two type-ish keys on one param (e.g. `"t":"string","t2":"string"`), delete the invented one — publish throws `invalid entry $t2 detected` (or `$<whatever>`) and the site won't go live, even though it imported. Each slot has exactly one `t` and at most one `l`; copy the slot verbatim from §5.5 and add nothing.
 
-When an action isn't covered above, don't guess by analogy — use the exact shape given for that `id` in §5.5/§5.8a.
+When an action isn't covered above, don't guess by analogy — use the exact shape given for that `id` in §5.5 or scripts.md.
 
-### 5.5 Complete block reference — every confirmed event and action
+### 5.5 Block reference: every event and the most-used actions
 
-**Transcribed verbatim from CatWeb's own block-palette export: 16 events, 131 actions (three of them deprecated). That is the entire vocabulary — never emit an `id` that is not in these tables.**
+**Transcribed verbatim from CatWeb's own block-palette export.** CatWeb has 16 events and 131 actions. This section lists every event and the 55 most-used actions; the full list is in scripts.md.
 
 **How to read the shape column.** `{t:object}` is shorthand for the parameter object `{"value":"<yours>","t":"object"}` — you supply `value`, and copy `t` / `l` / `assetbrowser` / `href` **exactly as shown, adding nothing and dropping nothing**. Quoted segments are fixed literal text; the only change allowed is appending a `(value)` annotation (§5.1a). Never add or remove a segment. A `?` inside an `l` (e.g. `variable?`) is literal — keep it. Output slots after `→` still take a real `value` (or `""` when you don't capture the result).
 
@@ -538,6 +540,8 @@ Two rules the tables can't show:
 | `15` | When donation completed | `["When donation completed..."]` |
 | `16` | When any key pressed | `["When any key pressed..."]` |
 
+**The most-used actions.** These cover most sites. **For any other action (audio, hierarchy, time and date, colour, math functions, mouse cursor, cross-site broadcasts and more), open [scripts.md](https://raw.githubusercontent.com/Began2/SiteGPT/main/scripts.md), which has all 131.** Never guess an id or shape that isn't in one of the two tables.
+
 **Actions — control flow & conditionals**
 
 | `id` | Action | Exact `text` array |
@@ -552,18 +556,6 @@ Two rules the tables can't show:
 | `38` | If doesn't contain | `["If", {t:string}, "doesn't contain", {t:string}]` |
 | `92` | If exists | `["If", {t:string,l:variable}, "exists"]` |
 | `93` | If doesn't exist | `["If", {t:string,l:variable}, "doesn't exist"]` |
-| `44` | If AND | `["If", {t:string,l:variable}, "AND", {t:string,l:variable}]` |
-| `45` | If OR | `["If", {t:string,l:variable}, "OR", {t:string,l:variable}]` |
-| `46` | If NOR | `["If", {t:string,l:variable}, "NOR", {t:string,l:variable}]` |
-| `47` | If XOR | `["If", {t:string,l:variable}, "XOR", {t:string,l:variable}]` |
-| `79` | If left mouse down | `["If left mouse button down"]` |
-| `80` | If middle mouse down | `["If middle mouse button down"]` |
-| `81` | If right mouse down | `["If right mouse button down"]` |
-| `82` | If key down | `["If", {t:key}, "down"]` |
-| `108` | If dark theme | `["If dark theme enabled"]` |
-| `103` | If is ancestor | `["If", {t:object}, "is ancestor of", {t:object}]` |
-| `104` | If is child | `["If", {t:object}, "is child of", {t:object}]` |
-| `105` | If is descendant | `["If", {t:object}, "is descendant of", {t:object}]` |
 | `112` | else | `["else"]` |
 | `25` | end | `["end"]` |
 | `22` | Repeat n times | `["Repeat", {t:number}, "times"]` |
@@ -575,8 +567,6 @@ Two rules the tables can't show:
 | `id` | Action | Exact `text` array |
 |---|---|---|
 | `0` | Log | `["Log", {t:any}]` |
-| `1` | Warn | `["Warn", {t:any}]` |
-| `2` | Error | `["Error", {t:any}]` |
 | `3` | Wait | `["Wait", {t:number}, "seconds"]` |
 
 **Actions — variables & math**
@@ -587,26 +577,14 @@ Two rules the tables can't show:
 | `96` | Delete variable | `["Delete", {t:string,l:variable}]` |
 | `12` | Increase | `["Increase", {t:string,l:variable}, "by", {t:number}]` |
 | `13` | Decrease | `["Decrease", {t:string,l:variable}, "by", {t:number}]` |
-| `14` | Multiply | `["Multiply", {t:string,l:variable}, "by", {t:number}]` |
-| `15` | Divide | `["Divide", {t:string,l:variable}, "by", {t:number}]` |
-| `40` | Power | `["Raise", {t:string,l:variable}, "to the power of", {t:number}]` |
-| `41` | Modulo | `[{t:string,l:variable}, "modulo", {t:number}]` |
-| `16` | Round | `["Round", {t:string,l:variable}]` |
-| `17` | Floor | `["Floor", {t:string,l:variable}]` |
-| `78` | Ceil | `["Ceil", {t:string,l:variable}]` |
-| `27` | Set to random | `["Set", {t:string,l:var}, "to random", {t:number,l:n}, "-", {t:number,l:n}]` |
-| `114` | Run math function | `["Run math function", {t:string,l:function}, {t:tuple}, "→", {t:string,l:variable}]` |
 
 **Actions — strings**
 
 | `id` | Action | Exact `text` array |
 |---|---|---|
-| `42` | Substring | `["Sub", {t:string,l:variable}, {t:number,l:start}, "-", {t:number,l:end}]` |
 | `43` | Replace | `["Replace", {t:string}, "in", {t:string,l:variable}, "by", {t:string}]` |
 | `48` | Get string length | `["Get length of", {t:string}, "→", {t:string,l:variable}]` |
 | `57` | Split | `["Split", {t:string}, {t:string,l:separator}, "→", {t:string,l:table}]` |
-| `69` | Lowercase | `["Lower", {t:string}, "→", {t:string,l:variable}]` |
-| `70` | Uppercase | `["Upper", {t:string}, "→", {t:string,l:variable}]` |
 | `109` | Concatenate | `["Concatenate", {t:string}, "with", {t:string}, "→", {t:string,l:variable}]` |
 
 **Actions — tables & arrays**
@@ -615,15 +593,10 @@ Two rules the tables can't show:
 |---|---|---|
 | `54` | Create table | `["Create table", {t:string,l:table}]` |
 | `55` | Set entry (value) | `["Set entry", {t:string,l:entry}, "of", {t:string,l:table}, "to", {t:string,l:any}]` |
-| `66` | Set entry (object) | `["Set entry", {t:string,l:entry}, "of", {t:string,l:table}, "to", {t:object}]` |
-| `131` | Set entry (function) | `["Set entry", {t:string,l:entry}, "of", {t:string,l:table}, "to", {t:string,l:function}]` |
 | `56` | Get entry | `["Get entry", {t:string,l:entry}, "of", {t:string,l:table}, "→", {t:string,l:variable}]` |
-| `90` | Delete entry | `["Delete entry", {t:string,l:entry}, "of", {t:string,l:table}]` |
 | `89` | Insert at position | `["Insert", {t:string,l:any}, "at position", {t:number,l:number?}, "of", {t:string,l:array}]` |
-| `91` | Remove at position | `["Remove entry at position", {t:number,l:number?}, "of", {t:string,l:array}]` |
 | `59` | Get array length | `["Get length of", {t:string,l:array}, "→", {t:string,l:variable}]` |
 | `113` | Iterate through | `["Iterate through", {t:string,l:table}, "({l!index},{l!value})"]` |
-| `110` | Join array | `["Join", {t:string,l:array}, "using", {t:string,l:string}, "→", {t:string,l:variable}]` |
 
 **Actions — objects & display**
 
@@ -633,64 +606,32 @@ Two rules the tables can't show:
 | `9` | Make visible | `["Make", {t:object}, "visible"]` |
 | `10` | Set text | `["Set", {t:object}, "text to", {t:string}]` |
 | `106` | Set image | `["Set", {t:object}, "image to", {t:id,assetbrowser:image}]` |
-| `107` | Set avatar image | `["Set", {t:object}, "image to avatar of", {t:number,l:userid}, {t:string,l:resolution?}]` |
 | `31` | Set property | `["Set", {t:string,l:property}, "of", {t:object}, "to", {t:any}]` |
 | `39` | Get property | `["Get", {t:string,l:property}, "of", {t:object}, "→", {t:string,l:variable}]` |
 | `88` | Tween | `["Tween", {t:string,l:property}, "of", {t:object}, "to", {t:any}, "-", {t:number,l:time}, {t:string,l:style}, {t:string,l:direction}]` |
 | `30` | Get text from input | `["Get text from", {t:object,l:input}, "→", {t:string,l:variable}]` |
 | `49` | Duplicate | `["Duplicate", {t:object}, "→", {t:string,l:variable}]` |
 | `50` | Delete object | `["Delete", {t:object}]` |
-| `127` | Get objects at position | `["Get objects at position", {t:string,l:x}, {t:string,l:y}, "→", {t:string,l:array}]` |
-| `129` | Get asset info | `["Get", {t:string,l:info}, "of asset", {t:string,l:id}, "→", {t:string,l:variable}]` |
 | `138` | Set attribute | `["Set", {t:string,l:attribute}, "of", {t:object}, "to", {t:any,l:any?}]` |
 | `139` | Get attribute | `["Get", {t:string,l:attribute}, "of", {t:object}, "→", {t:string,l:variable}]` |
-| `140` | Get all attributes | `["Get all attributes of", {t:object}, "→", {t:string,l:table}]` |
 
 **Actions — hierarchy**
 
 | `id` | Action | Exact `text` array |
 |---|---|---|
-| `58` | Parent object | `["Parent", {t:object}, "under", {t:object}]` |
-| `97` | Get parent | `["Get parent of", {t:object}, "→", {t:string,l:variable}]` |
 | `99` | Find child | `["Find child named", {t:string}, "in", {t:object}, "→", {t:string,l:variable}]` |
-| `98` | Find ancestor | `["Find ancestor named", {t:string}, "in", {t:object}, "→", {t:string,l:variable}]` |
-| `100` | Find descendant | `["Find descendant named", {t:string}, "in", {t:object}, "→", {t:string,l:variable}]` |
-| `101` | Get children | `["Get children of", {t:object}, "→", {t:string,l:table}]` |
-| `102` | Get descendants | `["Get descendants of", {t:object}, "→", {t:string,l:table}]` |
-
-**Actions — audio**
-
-| `id` | Action | Exact `text` array |
-|---|---|---|
-| `5` | Play audio | `["Play audio", {t:string,l:id,assetbrowser:audio}, "→", {t:string,l:variable?}]` |
-| `26` | Play looped audio | `["Play looped audio", {t:string,l:id,assetbrowser:audio}, "→", {t:string,l:variable?}]` |
-| `73` | Set volume | `["Set volume of", {t:string,l:variable}, "to", {t:number}]` |
-| `77` | Set speed | `["Set speed of", {t:string,l:variable}, "to", {t:number}]` |
-| `74` | Stop audio | `["Stop audio", {t:string,l:variable}]` |
-| `75` | Pause audio | `["Pause audio", {t:string,l:variable}]` |
-| `76` | Resume audio | `["Resume audio", {t:string,l:variable}]` |
-| `7` | Stop all audio | `["Stop all audio"]` |
-| `94` | Set audio property | `["Set", {t:string,l:property}, "of", {t:string,l:variable}, "to", {t:any}]` |
-| `95` | Get audio property | `["Get", {t:string,l:property}, "of", {t:string,l:variable}, "→", {t:string,l:variable}]` |
 
 **Actions — input & viewport**
 
 | `id` | Action | Exact `text` array |
 |---|---|---|
 | `84` | Get viewport size | `["Get viewport size →", {t:string,l:x}, {t:string,l:y}]` |
-| `85` | Get cursor position | `["Get cursor position →", {t:string,l:x}, {t:string,l:y}]` |
-| `135` | Set mouse icon | `["Set mouse icon to", {t:id,assetbrowser:image,l:id?}]` |
-| `136` | Hide mouse cursor | `["Hide mouse cursor"]` |
-| `137` | Show mouse cursor | `["Show mouse cursor"]` |
-
-The mouse actions only affect desktop visitors. For a cursor that only changes while hovering one element, set that element's `mouse_icon` key (§2.1) instead; no script needed. Use an icon-sized image (the §10 icons work) for a custom cursor, and always pair `Hide mouse cursor` with a way to show it again.
 
 **Actions — navigation & url**
 
 | `id` | Action | Exact `text` array |
 |---|---|---|
 | `4` | Redirect to | `["Redirect to", {t:string,href:true}]` |
-| `117` | Get URL | `["Get URL →", {t:string,l:variable}]` |
 | `67` | Get query parameter | `["Get query string parameter", {t:string}, "→", {t:string,l:variable}]` |
 
 **Actions — broadcast & user**
@@ -698,41 +639,14 @@ The mouse actions only affect desktop visitors. For a cursor that only changes w
 | `id` | Action | Exact `text` array |
 |---|---|---|
 | `32` | Broadcast page | `["Broadcast", {t:string,l:message}, "across page"]` |
-| `33` | Broadcast site | `["Broadcast", {t:string,l:message}, "across site"]` |
-| `130` | Broadcast cross-site | `["Broadcast", {t:string,l:message}, "cross-site to", {t:string,l:page,href:true}]` |
 | `51` | Get username | `["Get local username →", {t:string,l:variable}]` |
-| `53` | Get display name | `["Get local display name →", {t:string,l:variable}]` |
-| `52` | Get user ID | `["Get local user ID →", {t:string,l:variable}]` |
 
 **Actions — cookies**
 
 | `id` | Action | Exact `text` array |
 |---|---|---|
 | `34` | Set cookie | `["Set", {t:string,l:cookie}, "to", {t:any}]` |
-| `35` | Increase cookie | `["Increase", {t:string,l:cookie}, "by", {t:number}]` |
-| `62` | Delete cookie | `["Delete cookie", {t:string,l:cookie}]` |
 | `36` | Get cookie | `["Get cookie", {t:string,l:cookie}, "→", {t:string,l:variable}]` |
-
-**Actions — time & date**
-
-| `id` | Action | Exact `text` array |
-|---|---|---|
-| `68` | Get unix timestamp | `["Get unix timestamp →", {t:string,l:variable}]` |
-| `116` | Get server unix timestamp | `["Get server unix timestamp →", {t:string,l:variable}]` |
-| `83` | Get tick | `["Get tick →", {t:string,l:variable}]` |
-| `118` | Get timezone | `["Get timezone →", {t:string,l:variable}]` |
-| `71` | Format current date | `["Format current date/time", {t:string,l:format}, "→", {t:string,l:variable}]` |
-| `72` | Format from unix | `["Format from unix", {t:number}, {t:string,l:format}, "→", {t:string,l:variable}]` |
-
-**Actions — color**
-
-| `id` | Action | Exact `text` array |
-|---|---|---|
-| `119` | Hex to RGB | `["Convert", {t:string,l:hex}, "to RGB →", {t:string,l:variable}]` |
-| `120` | Hex to HSV | `["Convert", {t:string,l:hex}, "to HSV →", {t:string,l:variable}]` |
-| `121` | RGB to hex | `["Convert", {t:string,l:RGB}, "to hex →", {t:string,l:variable}]` |
-| `122` | HSV to hex | `["Convert", {t:string,l:HSV}, "to hex →", {t:string,l:variable}]` |
-| `123` | Lerp color | `["Lerp", {t:string,l:hex}, "to", {t:string,l:hex}, "by", {t:number,l:alpha}, "→", {t:string,l:variable}]` |
 
 **Actions — functions**
 
@@ -748,10 +662,10 @@ The mouse actions only affect desktop visitors. For a cursor that only changes w
 ### 5.6 Pre-emit script sweep
 
 Use this checklist when you write a `"class":"script"` element and when you check one. Walk every block and confirm all of the following. When writing, fix any failure before handing the script over. When checking, report each failure.
-1. **Every `id` appears in §5.5 and its parameter objects match that table's shape exactly** — same key set, same `t`, same `l`, in the same order. No invented, renamed, duplicated, or dropped key.
+1. **Every `id` appears in §5.5 or scripts.md and its parameter objects match that shape exactly** — same key set, same `t`, same `l`, in the same order. No invented, renamed, duplicated, or dropped key.
 2. **Top-level `content` entries are only events (`0`–`3`,`5`–`16`) or `6` (Define function).** No control-flow id (`18`–`25`, `112`, etc.) as a top-level entry.
 3. **Only events and `Define function` carry an `actions` key.** No `If`/`Repeat`/`Iterate` has a nested `actions` — their bodies are flat siblings.
-4. **Every `If…`/`Repeat`/`Iterate` opener has exactly one matching `end` (`25`), flat, correctly ordered** (§5.9c). An `else` (`112`) sits between an `If`'s body and that `If`'s `end`. It does **not** get an `end` of its own.
+4. **Every `If…`/`Repeat`/`Iterate` opener has exactly one matching `end` (`25`), flat, correctly ordered** (worked examples in scripts.md). An `else` (`112`) sits between an `If`'s body and that `If`'s `end`. It does **not** get an `end` of its own.
 5. **Every comparison id matches the direction its text states** (`20` greater, `21` lower).
 6. **Every tuple is an explicit array**, `{"value":[],"t":"tuple"}` even when empty.
 7. **Every `globalid` in the script is unique and charset-safe**; object refs point at a real `globalid`, never an alias (§5.1).
@@ -786,157 +700,17 @@ Three scopes: **Global** `{N}` (all scripts on the page — the only scope share
 
 **Set / Get prop** (ids `31` / `39`), **Get viewport size** (id `84`), **Get text from input** (id `30`), **Get query string parameter** (id `67`), **Cookie** (ids `34`/`35`/`36`), **If var exists/doesn't** (ids `92`/`93`), **Iterate through** (id `113`, auto-creates `l!index`/`l!value`) — all follow the standard text-array shape with the `()` convention on every string.
 
-### 5.8a `Run math function` (id `114`) — confirmed shape and worked example
+### 5.8a `Run math function` (id `114`)
 
-This is the single most-guessed action in the whole vocabulary — it has no example anywhere in earlier versions of this guide, so every generation invented a slightly different, unpublishable layout. **Confirmed text-array shape, transcribed verbatim from CatWeb's own block-palette export:**
+The most-guessed action. Its shape has **no literal segment between the function name and the tuple**, and the output variable is **not optional** (`l:"variable"`, no `?`). Only pass Luau `math` names (`abs`, `sqrt`, `min`, `max`, ...). Prefer `Round`/`Floor`/`Ceil` (`16`/`17`/`78`) for those operations. Full shape and a worked example: [scripts.md](https://raw.githubusercontent.com/Began2/SiteGPT/main/scripts.md).
 
-```
-["Run math function", {"t":"string","l":"function"}, {"t":"tuple"}, "→", {"t":"string","l":"variable"}]
-```
+### 5.9 Worked complete scripts
 
-Read the shape carefully — it differs from `Run function` (id `132`) in two ways that are easy to miss:
-- **No literal text segment between the function-name param and the tuple param.** The function name and its argument tuple sit back-to-back in the array — there is no `"with"` or similar connector string.
-- **The output variable is not optional** — `"l":"variable"`, no `?`. `Run function` (id `132`) uses `"l":"variable?"` because a function may not return; a math function always produces a value.
+Complete, import-valid scripts are in [scripts.md](https://raw.githubusercontent.com/Began2/SiteGPT/main/scripts.md): a counter button, a function using the global-passing pattern, iterating a table with a guard, a broken script and its fix, and loops + math + tables together. Open it before writing a non-trivial script; real scripts fail at the seams between events, functions and conditionals. The §6 header script in this guide is also a complete example.
 
-**Worked example — square root of a variable, with the `()` convention (the empty/non-empty tuple rule applies here too):**
+### 5.10 Saved and shared data (advanced)
 
-```json
-{"id":"114","text":["Run math function (sqrt)",{"value":"sqrt","t":"string","l":"function"},{"value":[{"value":"{40}","t":"string","l":"any"}],"t":"tuple"},"→ (41)",{"value":"41","t":"string","l":"variable"}],"globalid":"m1"}
-```
-
-This reads: run the Luau `math.sqrt` function with the single argument `{40}`, store the result in `{41}`. The one confirmed function name (from the CatWeb wiki's own description of this block) is `abs`; `sqrt` above follows the identical pattern for a different Luau `math.*` name. **Only pass function names that exist in Luau's `math` library** (`abs`, `sqrt`, `sin`, `cos`, `floor`, `ceil`, `min`, `max`, etc.) — for a two-argument function like `min`/`max`, add a second entry to the tuple's `value` array, e.g. `{"value":[{"value":"{40}","t":"string","l":"any"},{"value":"{41}","t":"string","l":"any"}],"t":"tuple"}`. `Round`/`Floor`/`Ceil` already have their own dedicated single-purpose ids (`16`/`17`/`78`) — prefer those over routing the same operation through `Run math function`.
-
-### 5.9 Worked Complete Scripts (study these end-to-end)
-
-Real scripting fails at the **seams** — how events, functions, conditionals, and variable reads fit into one valid `content` array. These are complete and import-valid.
-
-**5.9a — Counter button** (event + variable + conditional + Set text). Flat If→body→end; mutable `Increase`.
-
-```json
-{
-  "class": "script", "globalid": "sc1", "alias": "logic1", "enabled": "true",
-  "content": [
-    {"id":"0","text":["When website loaded..."],"globalid":"e0","x":"4900","y":"4900","width":"340",
-      "actions":[
-        {"id":"11","text":["Set (40)",{"value":"40","t":"string","l":"variable"},"to (0)",{"value":"0","t":"string","l":"any"}],"globalid":"a1"},
-        {"id":"10","text":["Set (lbl)",{"value":"lbl","t":"object"},"text to ({40})",{"value":"{40}","t":"string"}],"globalid":"a2"}
-      ]},
-    {"id":"1","text":["When (btn)",{"value":"btn","t":"object","l":"button"},"pressed..."],"globalid":"e1","x":"4900","y":"5050","width":"340",
-      "actions":[
-        {"id":"12","text":["Increase (40)",{"value":"40","t":"string","l":"variable"},"by (1)",{"value":"1","t":"number"}],"globalid":"b1"},
-        {"id":"20","text":["If ({40})",{"value":"{40}","t":"string","l":"any"},"is greater than (4)",{"value":"4","t":"string","l":"any"}],"globalid":"b2"},
-        {"id":"11","text":["Set (40)",{"value":"40","t":"string","l":"variable"},"to (0)",{"value":"0","t":"string","l":"any"}],"globalid":"b3"},
-        {"id":"25","text":["end"],"globalid":"b4"},
-        {"id":"10","text":["Set (lbl)",{"value":"lbl","t":"object"},"text to ({40})",{"value":"{40}","t":"string"}],"globalid":"b5"}
-      ]}
-  ]
-}
-```
-
-Note every `Set <var> to <any>` (id `11`) and both operands of `If greater than` (id `20`) use `{"t":"string","l":"any"}` — never bare `{"t":"any"}` (§5.4a).
-
-**5.9b — Reusable function with the global-passing pattern** (Define function + Run function + a global set by the caller, §5.3a).
-
-```json
-{
-  "class": "script", "globalid": "sc2", "alias": "logic2", "enabled": "true",
-  "content": [
-    {"id":"6","text":["Define function (showmsg)",{"value":"showmsg","t":"string","l":"function"}],"globalid":"f1","x":"5200","y":"4900","width":"360",
-      "actions":[
-        {"id":"10","text":["Set (st)",{"value":"st","t":"object"},"text to ({60})",{"value":"{60}","t":"string"}],"globalid":"g1"},
-        {"id":"9","text":["Make (st)",{"value":"st","t":"object"},"visible"],"globalid":"g2"}
-      ]},
-    {"id":"1","text":["When (sv)",{"value":"sv","t":"object","l":"button"},"pressed..."],"globalid":"e1","x":"4900","y":"5050","width":"340",
-      "actions":[
-        {"id":"11","text":["Set (60)",{"value":"60","t":"string","l":"variable"},"to (Saved)",{"value":"Saved","t":"string","l":"any"}],"globalid":"h1"},
-        {"id":"132","text":["Run function (showmsg)",{"value":"showmsg","t":"string","l":"function"},{"value":[],"t":"tuple"},"→",{"value":"","t":"string","l":"variable?"}],"globalid":"h2"}
-      ]}
-  ]
-}
-```
-
-The caller sets global `{60}` immediately before `Run function`, and the body reads `{60}` directly. There is no `variable_overrides` and the tuple is an explicit empty array.
-
-**5.9c — Iterate a table to build rows, with a guard** (Split id 57 + Iterate id 113 + Find child id 99 + existence guard). Note the **two `end`s**: inner closes the `If`, outer closes the `Iterate`.
-
-```json
-{
-  "class": "script", "globalid": "sc3", "alias": "logic3", "enabled": "true",
-  "content": [
-    {"id":"0","text":["When website loaded..."],"globalid":"e0","x":"4900","y":"4900","width":"360",
-      "actions":[
-        {"id":"57","text":["Split (one/two/three)",{"value":"one/two/three","t":"string"},{"value":"/","t":"string","l":"separator"},"→ (41)",{"value":"41","t":"string","l":"table"}],"globalid":"a1"},
-        {"id":"113","text":["Iterate through (41)",{"value":"41","t":"string","l":"table"},"({l!index},{l!value})"],"globalid":"a2"},
-        {"id":"99","text":["Find child named (row{l!index})",{"value":"row{l!index}","t":"string"},"in (list)",{"value":"list","t":"object"},"→ (l!5)",{"value":"l!5","t":"string","l":"variable"}],"globalid":"a3"},
-        {"id":"92","text":["If (l!5)",{"value":"l!5","t":"string","l":"variable"},"exists"],"globalid":"a4"},
-        {"id":"10","text":["Set ({l!5})",{"value":"{l!5}","t":"object"},"text to ({l!value})",{"value":"{l!value}","t":"string"}],"globalid":"a5"},
-        {"id":"25","text":["end"],"globalid":"a6"},
-        {"id":"25","text":["end"],"globalid":"a7"}
-      ]}
-  ]
-}
-```
-
-`Find child named` matches on the child's `alias`, so the rows here must be aliased `row1`, `row2`, `row3`. Every `If` (with or without an `else`), `Repeat`, and `Iterate` needs exactly one matching `end`, all as flat siblings. Getting the count and order of `end` blocks right is the most common structural script error.
-
-### 5.9d — A broken script and its fix
-
-**WRONG** — `"globalid":"s x"` (space breaks references), flat-string event `text`, `If` nesting its body in a child `actions` array, `Define function` nested inside the event. **RIGHT** — alphanumeric globalids, text-arrays with the `()` convention, flat `If`→body→`end`, `Define function` as a top-level `content` sibling. (See §5.9a for the canonical correct shapes.)
-
-### 5.9e — Loops + math + tables together (every parameter shape confirmed from the block-palette export)
-
-Builds a table of square roots for 1–5: `Repeat n times` (id `22`) counts up, `Run math function` (id `114`) computes `sqrt` each pass, `Set entry of table` (id `55`) stores it, then `Iterate through` (id `113`) reads the table back out. This is the failure cluster the earlier guide never covered end-to-end — loops, math, and tables only ever appeared in isolation.
-
-```json
-{
-  "class": "script", "globalid": "sc4", "alias": "logic4", "enabled": "true",
-  "content": [
-    {"id":"0","text":["When website loaded..."],"globalid":"e0","x":"4900","y":"4900","width":"360",
-      "actions":[
-        {"id":"54","text":["Create table (1)",{"value":"1","t":"string","l":"table"}],"globalid":"a1"},
-        {"id":"11","text":["Set (2)",{"value":"2","t":"string","l":"variable"},"to (0)",{"value":"0","t":"string","l":"any"}],"globalid":"a2"},
-        {"id":"22","text":["Repeat (5)",{"value":"5","t":"number"},"times"],"globalid":"a3"},
-        {"id":"12","text":["Increase (2)",{"value":"2","t":"string","l":"variable"},"by (1)",{"value":"1","t":"number"}],"globalid":"a4"},
-        {"id":"114","text":["Run math function (sqrt)",{"value":"sqrt","t":"string","l":"function"},{"value":[{"value":"{2}","t":"string","l":"any"}],"t":"tuple"},"→ (3)",{"value":"3","t":"string","l":"variable"}],"globalid":"a5"},
-        {"id":"55","text":["Set entry ({2})",{"value":"{2}","t":"string","l":"entry"},"of (1)",{"value":"1","t":"string","l":"table"},"to ({3})",{"value":"{3}","t":"string","l":"any"}],"globalid":"a6"},
-        {"id":"25","text":["end"],"globalid":"a7"},
-        {"id":"113","text":["Iterate through (1)",{"value":"1","t":"string","l":"table"},"({l!index},{l!value})"],"globalid":"a8"},
-        {"id":"0","text":["Log ({l!value})",{"value":"{l!value}","t":"any"}],"globalid":"a9"},
-        {"id":"25","text":["end"],"globalid":"a10"}
-      ]}
-  ]
-}
-```
-
-Points worth internalizing from this one:
-- The counter `{2}` is incremented **before** it's used as both the math-function argument and the table entry index — table entries here run 1–5, never 0 (§5.7's "setting index 1 converts a table to an array" note).
-- `Run math function`'s tuple has exactly one entry, each entry itself shaped `{"value":...,"t":"string","l":"any"}` (§5.4a) — not a bare string, not a bare number.
-- Two `end`s in the whole script, one per opener (`Repeat` at a3, `Iterate` at a8) — flat siblings, no nesting (§5.9c).
-- Swap the `Log` at the end for a `Set <object> text to ({l!value})` (id `10`) once you have a real label `globalid` to target; the loop/math/table mechanics above don't change.
-
----
-
-### 5.10 Persistent / cross-user data — the relay-account datastore (advanced)
-
-CatWeb has **no global or server-side storage**: variables and tables are per-visitor and die on refresh. To persist data, or share it *between* users, you simulate a backend with an **always-online alt account** parked on one fixed page (e.g. `api.<site>.rbx`) acting as a relay server. Generate both sides of this; only offer it when the site actually needs saved/shared state (leaderboards, counters, saves, live presence).
-
-**Prerequisite the AI cannot supply — state it plainly to the user:** they must run a Roblox account 24/7 without disconnecting, sitting on that page. Without it there is no datastore.
-
-- **Store = the alt's cookies** (`34` set, `36` get, `35` increment, `62` delete) — persistent, **~10KB total**. Never use variables/tables as the store: they are volatile, so one crash or update and the data is gone.
-- **Transport = broadcasts.** `Broadcast <msg> across page` (`32`) both directions; the alt listens with `When message received` (`9`), which exposes `{messageContent}`, `{messageSenderName}`, `{messageSenderId}`. **Broadcast cap is 979 bytes (§8)** — chunk anything larger.
-- **Protocol:** tag every message with a one-char op code so each side can route it — `G` get, `P` post, `R` reply, `H` heartbeat. Format `<op>|<key>|<value>`.
-
-**Broadcasts are a real message channel, so `{messageContent}` genuinely does pass through the filter** — unlike static page copy, this is the case the filter is actually built for, and it will tag payloads. **Design the protocol around it: keep keys and values numeric wherever possible** (`P|7|500`), since digits and spaces don't tag. Op codes (`G`/`P`/`R`/`H`) and the `|` separator are structural framing and stay raw. Usernames never need to travel in the payload, because the alt reads `{messageSenderName}` from the event. **Do not route user-entered text through the decoder to get it past the filter.** Broadcasts are exactly what the filter exists to check, so keep the datastore to numeric data.
-
-**POST** (client saves): client broadcasts `P|<key>|<value>` with a numeric key, e.g. `P|7|500`. Alt on `When message received` splits `{messageContent}` by `|`; if op `P`, sets cookie `{messageSenderName}_<key>` to `<value>`.
-**GET** (client reads): client broadcasts `G|<key>`, e.g. `G|7`. Alt reads cookie `{messageSenderName}_<key>` (`36`) and replies `Broadcast R|<key>|<value>` (`32`). The client's own `When message received` filters for the `R` prefix and updates its UI.
-**Online check** — pick one: **pull** (client sends `H`, starts a timer, marks offline if no `H` reply in ~5s) or **push heartbeat** (alt broadcasts `H` every ~3s; client marks offline if none heard in ~5s — cheaper on request volume).
-
-**Security — mandatory, not optional.** Broadcasts are visible to **every** visitor on the page, so any user can forge any request. The alt MUST (a) key all data by `{messageSenderName}` and **never trust a username carried inside the payload**, and (b) drop malformed / oversized messages. Concurrent POSTs to one key are last-write-wins — keep keys per-user to avoid clobbering.
-
-**Server-side POST handler, built from ordinary actions already in §5.5 — no new JSON shape needed.** On the alt's `When message received` (`9`): `Split` (`57`) `{messageContent}` by `|` into a table; `Get entry` (`56`) 1 → `{30}` (op); branch with `If {30} is equal to "P"` (`18`); inside the branch, `Get entry` 2 → `{31}` (key) and `Get entry` 3 → `{32}` (value); then `Set <cookie>` (`34`) where the cookie name is `{messageSenderName}_{31}` and the value is `{32}`; close with `end` (`25`). Seven actions, all ordinary. The only trick is building the cookie name from a concatenated `{var}_{var}` reference instead of a literal.
-
-The GET handler is the same skeleton: branch `{30} == "G"`, `Get cookie` (`36`) `{messageSenderName}_{31}` → `{33}`, then `Broadcast` (`32`) `R|{31}|{33}`. The client mirrors it with its own `When message received` filtering for the `R` prefix and updating its UI from the parsed value.
+CatWeb has no server storage: variables and tables are per-visitor and reset on refresh. Cookies persist per visitor (with the Cookies gamepass). **To save data across sessions or share it between users, open [datastore.md](https://raw.githubusercontent.com/Began2/SiteGPT/main/datastore.md)**, which describes the relay-account pattern. Offer it only when the site truly needs saved or shared state, such as leaderboards, global counters or save files. It needs the user to keep an alt account online on one page 24/7, which they must set up themselves.
 
 ---
 
@@ -1107,7 +881,7 @@ The most common ones:
 
 ## 11. Sound Library
 
-Eight pre-uploaded UI sounds: `click`, `hover`, `toggle`, `success`, `error`, `notification`, `send` and `transition`. **Open [sounds.md](https://raw.githubusercontent.com/Began2/SiteGPT/main/sounds.md) for their IDs** and a play example. Never invent a sound ID.
+Pre-uploaded UI sounds: **Open [sounds.md](https://raw.githubusercontent.com/Began2/SiteGPT/main/sounds.md) for their IDs** and a play example. Never invent a sound ID.
 
 ---
 
