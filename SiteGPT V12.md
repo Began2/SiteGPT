@@ -98,6 +98,7 @@ The root is a JSON **object** with these keys — not a bare array.
 | `tooltip` | string | Shown on hover. |
 | `children` | array | Nested child elements |
 | `attributes` | array | Optional custom data on any element (§2.1d). Omit it or use `[]` when unused. |
+| `mouse_icon` | asset ID | Optional cursor shown while hovering the element, on desktop. Bare numeric ID, no `rbxassetid://`. Use sparingly, e.g. a custom pointer on clickable cards. |
 
 ### 2.1a Unknown property keys throw `default not found for property`
 
@@ -479,9 +480,9 @@ Scrollable container.
 }
 ```
 
-`canvassize` is `"auto_y"` (grows downward — most common), `"auto_x"` (carousels), `"auto_xy"` (rare), or a fixed UDim2 such as `"{0,0},{2,0}"` (a canvas twice the frame's height). **Never bare `"auto"`** — always pick an axis, and never leave the non-scrolling axis free.
+`canvassize` is `"auto_y"` (grows downward — most common), `"auto_x"` (carousels), `"auto_xy"` (rare), or a fixed UDim2 such as `"{0,0},{2,0}"` (a canvas twice the frame's height). **Never bare `"auto"`** — always pick an axis, and never leave the non-scrolling axis free. Reach for this only when content genuinely overflows a fixed-height viewport; a `Frame` with `size:"auto_y"` is the right call for content that merely grows.
 
-The scrollbar's look comes from `scrollbar_thickness`, `scrollbar_color` and `scrollbar_transparency`, all of which scripts can also change. Its images can be replaced through the `Top Image`, `Middle Image` and `Bottom Image` properties. Their JSON keys are not confirmed in this guide, so set those three from a script (§7) rather than as JSON keys. Reach for this only when content genuinely overflows a fixed-height viewport; a `Frame` with `size:"auto_y"` is the right call for content that merely grows.
+**Scrollbar styling.** `scrollbar_thickness`, `scrollbar_color` and `scrollbar_transparency` set its size and colour, and scripts can change all three. To replace the scrollbar's images, set `scrollbar_top_image_id`, `scrollbar_mid_image_id` and `scrollbar_bottom_image_id`. Each is a bare asset ID with no `rbxassetid://`, e.g. `"scrollbar_mid_image_id":"6319951718"`. Their script names are `Top Image`, `Middle Image` and `Bottom Image` (§7). Leave all three out to keep the default scrollbar.
 
 ---
 
@@ -580,10 +581,26 @@ In scripts the four are `Top Left Radius`, `Top Right Radius`, `Bottom Left Radi
 Drop shadow behind the parent. Use it on things that float above the page, such as dropdowns, modals, popovers and a lifted card on hover.
 
 ```json
-{"class": "UIShadow", "globalid": "sh"}
+{
+  "class": "UIShadow",
+  "globalid": "sh",
+  "shadow_color": "#000000",
+  "shadow_transparency": "0.6",
+  "shadow_offset": "{0,0},{0,4}",
+  "shadow_spread": "{0,2},{0,2}",
+  "blur_radius": "0,12"
+}
 ```
 
-The shadow's colour, offset, spread, transparency and blur radius can all be changed in the editor. **Their JSON keys are not confirmed in this guide**, so emit `UIShadow` with no extra keys (it uses CatWeb's default shadow) and tell the user they can tune it in the editor. Never guess a key; an unknown key fails the import (§2.1a).
+| Key | Format | Notes |
+|---|---|---|
+| `shadow_color` | `"#rrggbb"` | Keep the `#`. Black, or a dark tint of the accent, on dark themes. |
+| `shadow_transparency` | `"0"`–`"1"` | `0.5`–`0.7` reads as a soft shadow; lower is harsher. |
+| `shadow_offset` | UDim2 | How far the shadow is shifted. Use pixel offsets (`"{0,0},{0,4}"` drops it 4px); scale values move it by a fraction of the parent's size. |
+| `shadow_spread` | UDim2 | How much bigger than the parent the shadow is, per axis. |
+| `blur_radius` | UDim | How soft the edge is, e.g. `"0,12"`. |
+
+Every key is optional; a bare `UIShadow` uses CatWeb's default shadow. It also accepts `z_index`.
 
 ---
 
@@ -1154,7 +1171,7 @@ Two rules the tables can't show:
 | `136` | Hide mouse cursor | `["Hide mouse cursor"]` |
 | `137` | Show mouse cursor | `["Show mouse cursor"]` |
 
-The mouse actions only affect desktop visitors. Use an icon-sized image (the §10 icons work) for a custom cursor, and always pair `Hide mouse cursor` with a way to show it again.
+The mouse actions only affect desktop visitors. For a cursor that only changes while hovering one element, set that element's `mouse_icon` key (§2.1) instead; no script needed. Use an icon-sized image (the §10 icons work) for a custom cursor, and always pair `Hide mouse cursor` with a way to show it again.
 
 **Actions — navigation & url**
 
